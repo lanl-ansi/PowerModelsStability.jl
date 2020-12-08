@@ -1,0 +1,43 @@
+{
+  "title": "Stability_data",
+  "type": "object",
+  "x-examples": {
+    "stability_data_example": {
+      "id": "string",
+      "busID": "string",
+      "mp": 0.3,
+      "mq": 0.3,
+      "tau": 0.0001,
+      "omega0": 376.9911,
+      "r": 0.001,
+      "x": 0.001
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "busID": {
+      "type": "string"
+    },
+    "mp": {
+      "type": "number"
+    },
+    "mq": {
+      "type": "number"
+    },
+    "tau": {
+      "type": "number"
+    },
+    "omega0": {
+      "type": "number"
+    },
+    "r": {
+      "type": "number"
+    },
+    "x": {
+      "type": "number"
+    }
+  },
+  "description": "Stability input data format"
+}
