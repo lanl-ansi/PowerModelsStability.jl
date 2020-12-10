@@ -2,8 +2,8 @@
 using PowerModels,PowerModelsDistribution,InfrastructureModels,LinearAlgebra;
 using JuMP,Ipopt,Gurobi;
 using JSON;
-include("../src/io.jl");
-include("../src/inverter.jl");
+include("../src/io/preprocessing.jl");
+include("../src/core/inverter.jl");
 
 # load the data
 filePath = "./data/case2_diag.dss";
@@ -26,6 +26,7 @@ mQ["3"] = 0.3;
 τ = Dict();
 τ["3"] =1e-4;
 rN = 1000;
+ω0 = 2*pi*60;
 Atot = obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN);
 eigValList = eigvals(Atot);
 statusTemp = true;
