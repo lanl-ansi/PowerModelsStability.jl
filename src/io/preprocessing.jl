@@ -10,11 +10,6 @@ function readJSON(inAdd)
     return inverterData;
 end
 
-function createInverters(mpData, inverterData)
-    # create inverter buses from the json file
-    
-end
-
 function preproc(mpData)
     # obtain the branches that are between two buses and buses with inverters
     brList = [];
