@@ -29,6 +29,7 @@ rN = 1000;
 ω0 = 2*pi*60;
 Atot = obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN);
 eigValList = eigvals(Atot);
+eigVectorList = eigvecs(Atot);
 statusTemp = true;
 for eig in eigValList
     if eig.re > 0

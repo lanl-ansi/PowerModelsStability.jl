@@ -39,13 +39,13 @@ function preproc(mpData)
         println(mpData["load"][i]["load_bus"]);
         if !("$(mpData["load"][i]["load_bus"])" in keys(loadList))
             loadList["$(mpData["load"][i]["load_bus"])"] = [[0.0,0.0,0.0],[0.0,0.0,0.0]];
-            loadList["$(mpData["load"][i]["load_bus"])"][1] += mpData["load"][i]["pd"];
-            loadList["$(mpData["load"][i]["load_bus"])"][2] += mpData["load"][i]["qd"];
+            loadList["$(mpData["load"][i]["load_bus"])"][1][mpData["load"][i]["connections"]] += mpData["load"][i]["pd"];
+            loadList["$(mpData["load"][i]["load_bus"])"][2][mpData["load"][i]["connections"]] += mpData["load"][i]["qd"];
             vnomList["$(mpData["load"][i]["load_bus"])"] = [0.0,0.0,0.0];
-            vnomList["$(mpData["load"][i]["load_bus"])"] += (mpData["load"][i]["pd"] .!= 0.0)*mpData["load"][i]["vnom_kv"];
+            vnomList["$(mpData["load"][i]["load_bus"])"][mpData["load"][i]["connections"]] += (mpData["load"][i]["pd"] .!= 0.0)*mpData["load"][i]["vnom_kv"];
         else
-            loadList["$(mpData["load"][i]["load_bus"])"][1] += mpData["load"][i]["pd"];
-            vnomList["$(mpData["load"][i]["load_bus"])"] += (mpData["load"][i]["pd"] .!= 0.0)*mpData["load"][i]["vnom_kv"];
+            loadList["$(mpData["load"][i]["load_bus"])"][1][mpData["load"][i]["connections"]] += mpData["load"][i]["pd"];
+            vnomList["$(mpData["load"][i]["load_bus"])"][mpData["load"][i]["connections"]] += (mpData["load"][i]["pd"] .!= 0.0)*mpData["load"][i]["vnom_kv"];
         end
     end
 
