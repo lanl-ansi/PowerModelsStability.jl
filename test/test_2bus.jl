@@ -1,9 +1,8 @@
 # test the two bus system
-using PowerModels,PowerModelsDistribution,InfrastructureModels,LinearAlgebra;
-using JuMP,Ipopt,Gurobi;
-using JSON;
 include("../src/io/preprocessing.jl");
 include("../src/core/inverter.jl");
+include("../src/core/inverter_new.jl");
+include("../src/core/constraint.jl");
 
 # load the data
 filePath = "./data/case2_diag.dss";
@@ -15,7 +14,10 @@ filePath = "./data/case2_diag.dss";
 mpData = PowerModelsDistribution.parse_file(filePath);
 mpData = transform_data_model(mpData);
 ipopt_solver = with_optimizer(Ipopt.Optimizer, tol=1e-5, print_level=0);
+
+# obtain the opf solution and the opf model
 opfSol = PowerModelsDistribution.run_mc_opf(mpData, PowerModels.ACPPowerModel, ipopt_solver);
+pm = PowerModelsDistribution.instantiate_mc_model(mpData,PowerModels.ACPPowerModel,PowerModelsDistribution.build_mc_opf);
 
 # change the virtual bus to be an inverter bus for test
 mpData["bus"]["3"]["bus_type"] = 4;
@@ -31,11 +33,17 @@ Atot = obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN);
 eigValList = eigvals(Atot);
 eigVectorList = eigvecs(Atot);
 statusTemp = true;
-for eig in eigValList
+for eigInd in 1:length(eigValList)
+    eig = eigValList[eigInd];
+    vioList = [];
     if eig.re > 0
         statusTemp = false;
+        push!(vioList,eigVectorList[eigInd,:]);
     end
 end
 if statusTemp
     println("The current OPF solution is stable.");
+else
+    Amg = obtainGlobal_var(mpData,pm,ω0,mP,mQ,τ,rN);
+    constraint_stability(pm, 0, vioList, Amg);
 end

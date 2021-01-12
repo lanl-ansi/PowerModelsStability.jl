@@ -9,17 +9,17 @@ function vectorMulti(mp, C, v)
     return multiExpression;
 end
 
-function obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected)
+function obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected, inverters, invBusDict)
     A = Dict();
 
-    for i in busList
+    for invItem in inverters
         # initialize the matrix to be zero matrices, if it is a regular bus
-        A[i] = zeros(9,9);
+        A[invItem,invItem] = zeros(9,9);
     end
 
-    for busConnected in invList
+    # for every inverter
+    for i in inverters
         # there should be only one branch from the generator
-        i = invConnected[busConnected][1];
         iInd = parse(Int64,i);
         link = mpData["branch"][invLine[i]];
         L = link["br_x"]./ω0;
@@ -53,44 +53,63 @@ function obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, i
         dQ_id = vq0;
         dQ_iq = -vd0;
 
-        A[busConnected][1,2] = 1;
-        A[busConnected][2,:] = -1/τ[i]*[mP[i]*dP_δ;
+        A[i,i][1,2] = 1;
+        A[i,i][2,:] = -1/τ[i]*[mP[i]*dP_δ;
                             1;
                             mP[i]*dP_v;
                             mP[i]*dP_id[1]; mP[i]*dP_id[2]; mP[i]*dP_id[3];
                             mP[i]*dP_iq[1]; mP[i]*dP_iq[2]; mP[i]*dP_iq[3]
                             ];
-        A[busConnected][3,:] = -1/τ[i]*[mQ[i]*dQ_δ;
+        A[i,i][3,:] = -1/τ[i]*[mQ[i]*dQ_δ;
                             0;
                             1+mQ[i]*dQ_v;
                             mQ[i]*dQ_id[1]; mQ[i]*dQ_id[2]; mP[i]*dQ_id[3];
                             mQ[i]*dQ_iq[1]; mQ[i]*dQ_iq[2]; mP[i]*dQ_iq[3]
                             ];
-        A[busConnected][4:6,1] = inv(L)*dvd_δ;
-        A[busConnected][4:6,3] = inv(L)*dvd_v;
-        A[busConnected][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
-        A[busConnected][4:6,7:9] = inv(L)*link["br_x"];
-        A[busConnected][7:9,1] = inv(L)*dvq_δ;
-        A[busConnected][7:9,3] = inv(L)*dvq_v;
-        A[busConnected][7:9,4:6] = -inv(L)*link["br_x"];
-        A[busConnected][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+        A[i,i][4:6,1] = inv(L)*dvd_δ;
+        A[i,i][4:6,3] = inv(L)*dvd_v;
+        A[i,i][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+        A[i,i][4:6,7:9] = inv(L)*link["br_x"];
+        A[i,i][7:9,1] = inv(L)*dvq_δ;
+        A[i,i][7:9,3] = inv(L)*dvq_v;
+        A[i,i][7:9,4:6] = -inv(L)*link["br_x"];
+        A[i,i][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
     end
+
+    # for every pair of inverters in the same bus
+    for iBus in invList
+        if length(invConnected[iBus]) > 1
+            for i in 1:length(invConnected[iBus])
+                for j in (i+1):length(invConnected[iBus])
+                    A[i,j] = zeros(9,9);
+                    link = mpData["branch"][invLine[i]];
+                    L = link["br_x"]./ω0;
+                    A[i,j][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+                    A[i,j][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+
+                    link = mpData["branch"][invLine[j]];
+                    L = link["br_x"]./ω0;
+                    A[j,i] = zeros(9,9);
+                    A[j,i][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+                    A[j,i][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+                end
+            end
+        end
+    end
+
     return A;
 end
 
-function obtainA_inverter_global_var(mpData, pm, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected)
+function obtainA_inverter_global_var(mpData, pm, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected, inverters, invBusDict)
     A = Dict();
-
-    for i in busList
-        # initialize the matrix to be zero matrices, if it is a regular bus
-        A[i] = Array{Any,2}(zeros(9,9));
+    for invItem in inverters
+        A[invItem,invItem] = Array{Any,2}(zeros(9,9));
     end
 
-    for busConnected in invList
+    for iBus in inverters
         # there should be only one branch from the generator
-        iBus = invConnected[busConnected][0];
         iInd = parse(Int64,iBus);
-        link = mpData["branch"][iBus];
+        link = mpData["branch"][invLine[iBus]];
         L = link["br_x"]./ω0;
         i = mpData["bus"][iBus]["index"];
         δ0 = _PMs.var(pm,0,:va,i)[1];
@@ -125,8 +144,8 @@ function obtainA_inverter_global_var(mpData, pm, ω0, mP, mQ, τ, rN, busList, i
         dQ_id = vq0;
         dQ_iq = [@NLexpression(pm.model,-vd0[i]) for i in 1:length(vd0)];
 
-        A[busConnected][1,2] = 1;
-        A[busConnected][2,:] = [@NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_δ);
+        A[iBus,iBus][1,2] = 1;
+        A[iBus,iBus][2,:] = [@NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_δ);
                             -1/τ[iBus];
                             @NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_v);
                             @NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_id[1]);
@@ -136,7 +155,7 @@ function obtainA_inverter_global_var(mpData, pm, ω0, mP, mQ, τ, rN, busList, i
                             @NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_iq[2]);
                             @NLexpression(pm.model,-1/τ[iBus]*mP[iBus]*dP_iq[3])
                             ];
-        A[busConnected][3,:] = [@NLexpression(pm.model,-1/τ[iBus]*mQ[iBus]*dQ_δ);
+        A[iBus,iBus][3,:] = [@NLexpression(pm.model,-1/τ[iBus]*mQ[iBus]*dQ_δ);
                             0;
                             @NLexpression(pm.model,-1/τ[iBus]*(1+mQ[iBus]*dQ_v));
                             @NLexpression(pm.model,-1/τ[iBus]*(mQ[iBus]*dQ_id[1]));
@@ -146,70 +165,92 @@ function obtainA_inverter_global_var(mpData, pm, ω0, mP, mQ, τ, rN, busList, i
                             @NLexpression(pm.model,-1/τ[iBus]*(mQ[iBus]*dQ_iq[2]));
                             @NLexpression(pm.model,-1/τ[iBus]*(mP[iBus]*dQ_iq[3]))
                             ];
-        A[busConnected][4:6,1] = vectorMulti(pm.model,inv(L),dvd_δ);
-        A[busConnected][4:6,3] = vectorMulti(pm.model,inv(L),dvd_v);
-        A[busConnected][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
-        A[busConnected][4:6,7:9] = inv(L)*link["br_x"];
-        A[busConnected][7:9,1] = vectorMulti(pm.model,inv(L),dvq_δ);
-        A[busConnected][7:9,3] = vectorMulti(pm.model,inv(L),dvq_v);
-        A[busConnected][7:9,4:6] = -inv(L)*link["br_x"];
-        A[busConnected][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+        A[iBus,iBus][4:6,1] = vectorMulti(pm.model,inv(L),dvd_δ);
+        A[iBus,iBus][4:6,3] = vectorMulti(pm.model,inv(L),dvd_v);
+        A[iBus,iBus][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+        A[iBus,iBus][4:6,7:9] = inv(L)*link["br_x"];
+        A[iBus,iBus][7:9,1] = vectorMulti(pm.model,inv(L),dvq_δ);
+        A[iBus,iBus][7:9,3] = vectorMulti(pm.model,inv(L),dvq_v);
+        A[iBus,iBus][7:9,4:6] = -inv(L)*link["br_x"];
+        A[iBus,iBus][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
     end
+
+    # for every pair of inverters in the same bus
+    for iBus in invList
+        if length(invConnected[iBus]) > 1
+            for i in 1:length(invConnected[iBus])
+                for j in (i+1):length(invConnected[iBus])
+                    A[i,j] = zeros(9,9);
+                    link = mpData["branch"][invLine[i]];
+                    L = link["br_x"]./ω0;
+                    A[i,j][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+                    A[i,j][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+
+                    link = mpData["branch"][invLine[j]];
+                    L = link["br_x"]./ω0;
+                    A[j,i] = zeros(9,9);
+                    A[j,i][4:6,4:6] = -inv(L)*link["br_r"] - rN*inv(L);
+                    A[j,i][7:9,7:9] = -inv(L)*link["br_r"] - rN*inv(L);
+                end
+            end
+        end
+    end
+
     return A;
 end
 
-function obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected)
+function obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
     B = Dict();
 
-    for i in busList
+    for i in inverters
+        iBus = invBusDict[i];
         for k in brList
             # initialize the matrix to be zero matrices
             B[i,k] = zeros(9,6);
-            iInd = parse(Int64,i);
-            if i in invList
-                L = mpData["branch"][invLine[invConnected[i][1]]]["br_x"]./ω0;
-                if mpData["branch"][k]["f_bus"] == iInd
-                    B[i,k][4:6,1:3] = rN*inv(L);
-                    B[i,k][7:9,4:6] = rN*inv(L);
-                elseif mpData["branch"][k]["t_bus"] == iInd
-                    B[i,k][4:6,1:3] = -rN*inv(L);
-                    B[i,k][7:9,4:6] = -rN*inv(L);
-                end
+            iInd = parse(Int64,iBus);
+            L = mpData["branch"][invLine[i]]["br_x"]./ω0;
+            if mpData["branch"][k]["f_bus"] == iInd
+                B[i,k][4:6,1:3] = rN*inv(L);
+                B[i,k][7:9,4:6] = rN*inv(L);
+            elseif mpData["branch"][k]["t_bus"] == iInd
+                B[i,k][4:6,1:3] = -rN*inv(L);
+                B[i,k][7:9,4:6] = -rN*inv(L);
             end
         end
     end
     return B;
 end
 
-function obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, load_L)
+function obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict)
     C = Dict();
 
-    for i in busList
+    for i in inverters
         # initialize the matrix to be zero matrices
-        C[i] = zeros(9,6);
+        C[i,invBusDict[i]] = zeros(9,6);
         iInd = parse(Int64,i);
-        if (i in invList) & (i in keys(load_L))
-            L = load_L[i];
-            C[i][4:6,1:3] = rN*inv(L);
-            C[i][7:9,4:6] = rN*inv(L);
+        if invBusDict[i] in keys(load_L)
+            L = load_L[invBusDict[i]];
+            C[i,invBusDict[i]][4:6,1:3] = rN*inv(L);
+            C[i,invBusDict[i]][7:9,4:6] = rN*inv(L);
         end
     end
     return C;
 end
 
-function obtainD_inverter_global(mpData,rN, ω0, busList, brList, invList, invLine)
+function obtainD_inverter_global(mpData,rN, ω0, busList, brList, invList, invLine, inverters, invBusDict)
     D = Dict();
 
     for k in brList
         L = mpData["branch"][k]["br_x"]./ω0;
-        for i in busList
+        for i in inverters
+            iBus = invBusDict[i];
             # it is a regular bus
             D[k,i] = zeros(6,9);
-            if i == "$(mpData["branch"][k]["f_bus"])"
+            if iBus == "$(mpData["branch"][k]["f_bus"])"
                 D[k,i][1:3,4:6] = rN*inv(L);
                 D[k,i][4:6,7:9] = rN*inv(L);
             end
-            if i == "$(mpData["branch"][k]["t_bus"])"
+            if iBus == "$(mpData["branch"][k]["t_bus"])"
                 D[k,i][1:3,4:6] = -rN*inv(L);
                 D[k,i][4:6,7:9] = -rN*inv(L);
             end
@@ -271,15 +312,16 @@ function obtainF_inverter_global(mpData, rN, ω0, busList, brList, loadList)
     return F;
 end
 
-function obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L)
+function obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict)
     G = Dict();
 
-    for i in busList
-        G[i] = zeros(6,9);
-        if (i in invList) & (i in keys(loadList))
-            L = load_L[i];
-            G[i][1:3,4:6] = rN*inv(L);
-            G[i][4:6,7:9] = rN*inv(L);
+    for i in inverters
+        iBus = invBusDict[i];
+        G[iBus,i] = zeros(6,9);
+        if iBus in keys(loadList)
+            L = load_L[iBus];
+            G[iBus,i][1:3,4:6] = rN*inv(L);
+            G[iBus,i][4:6,7:9] = rN*inv(L);
         end
     end
 
@@ -334,62 +376,90 @@ function obtainI_inverter_global(mpData, rN, ω0, busList, brList, loadList, loa
     return I;
 end
 
-function combineSub(busList, brList, A, B, C, D, E, F, G, H, I, type)
+function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G, H, I, type)
     n = length(busList);
+    ni = length(inverters);
     m = length(brList);
     if type == 1
-        Atot = zeros(15*n + 6*m, 15*n + 6*m);
+        Atot = zeros(9*ni + 6*m + 6*n, 9*ni + 6*m + 6*n);
     else
-        Atot = Array{Any,2}(zeros(15*n + 6*m, 15*n + 6*m));
+        Atot = Array{Any,2}(zeros(9*ni + 6*m + 6*n, 9*ni + 6*m + 6*n));
     end
     # Fill in the total matrix
-    for i in 1:n
+    for i in 1:ni
         # fill in A
-        Atot[9*(i-1)+1:9*i,9*(i-1)+1:9*i] = A[busList[i]];
-        # fill in C
-        Atot[9*(i-1)+1:9*i,9*n+6*m+6*(i-1)+1:9*n+6*m+6*i] = C[busList[i]];
-        # fill in G
-        Atot[9*n+6*m+6*(i-1)+1:9*n+6*m+6*i,9*(i-1)+1:9*i] = G[busList[i]];
-        # fill in I
-        Atot[9*n+6*m+6*(i-1)+1:9*n+6*m+6*i,9*n+6*m+6*(i-1)+1:9*n+6*m+6*i] = I[busList[i]];
+        for j in 1:ni
+            if (inverters[i],inverters[j]) in keys(A)
+                Atot[9*(i-1)+1:9*i,9*(j-1)+1:9*j] = A[inverters[i],inverters[j]];
+            end
+        end
         for j in 1:m
             # fill in B
-            Atot[9*(i-1)+1:9*i,9*n+6*(j-1)+1:9*n+6*j] = B[busList[i],brList[j]];
+            Atot[9*(i-1)+1:9*i,9*ni+6*(j-1)+1:9*ni+6*j] = B[inverters[i],brList[j]];
             # fill in D
-            Atot[9*n+6*(j-1)+1:9*n+6*j,9*(i-1)+1:9*i] = D[brList[j],busList[i]];
-            # fill in F
-            Atot[9*n+6*(j-1)+1:9*n+6*j,9*n+6*m+6*(i-1)+1:9*n+6*m+6*i] = F[brList[j],busList[i]];
-            # fill in H
-            Atot[9*n+6*m+6*(i-1)+1:9*n+6*m+6*i,9*n+6*(j-1)+1:9*n+6*j] = H[busList[i],brList[j]];
+            Atot[9*ni+6*(j-1)+1:9*ni+6*j,9*(i-1)+1:9*i] = D[brList[j],inverters[i]];
+        end
+
+        for j in 1:n
+            if busList[j] == invBusDict[inverters[i]]
+                # fill in C
+                Atot[9*(i-1)+1:9*i,9*ni+6*m+6*(j-1)+1:9*ni+6*m+6*j] = C[inverters[i],busList[j]];
+                # fill in G
+                Atot[9*ni+6*m+6*(j-1)+1:9*ni+6*m+6*j,9*(i-1)+1:9*i] = G[busList[j],inverters[i]];
+            end
         end
     end
+
+    for i in 1:n
+        # fill in I
+        Atot[9*ni+6*m+6*(i-1)+1:9*ni+6*m+6*i,9*ni+6*m+6*(i-1)+1:9*ni+6*m+6*i] = I[busList[i]];
+        for j in 1:m
+            # fill in F
+            Atot[9*ni+6*(j-1)+1:9*ni+6*j,9*ni+6*m+6*(i-1)+1:9*ni+6*m+6*i] = F[brList[j],busList[i]];
+            # fill in H
+            Atot[9*ni+6*m+6*(i-1)+1:9*ni+6*m+6*i,9*ni+6*(j-1)+1:9*ni+6*j] = H[busList[i],brList[j]];
+        end
+    end
+
     for j1 in 1:m
         for j2 in 1:m
             # fill in E
-            Atot[9*n+6*(j1-1)+1:9*n+6*j1,9*n+6*(j2-1)+1:9*n+6*j2] = E[brList[j1],brList[j2]];
+            Atot[9*ni+6*(j1-1)+1:9*ni+6*j1,9*ni+6*(j2-1)+1:9*ni+6*j2] = E[brList[j1],brList[j2]];
         end
     end
     return Atot;
 end
 
 # obtain the global matrix of the
-function obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN)
+function obtainGlobal_multi(mpData,opfSol,ω0,mP,mQ,τ,rN)
     # preprocessing
     busList, brList, invList, invConnected, invLine, loadList, vnomList = preproc(mpData);
     load_L,load_R,load_X = procLoad(mpData, loadList, vnomList, ω0);
 
+    inverters = [];
+    invBusDict = Dict();
+
+    for i in invList
+        currentInv = invConnected[i];
+        # obtain a list of inverter buses
+        append!(inverters, currentInv);
+        for invItem in currentInv
+            invBusDict[invItem] = i;
+        end
+    end
+
     # obtain A matrix
-    Asub = obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected);
-    Bsub = obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected);
-    Csub = obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, load_L);
-    Dsub = obtainD_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine);
+    Asub = obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected, inverters, invBusDict);
+    Bsub = obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, inverters, invBusDict);
+    Csub = obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict);
+    Dsub = obtainD_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, inverters, invBusDict);
     Esub = obtainE_inverter_global(mpData, rN, ω0, brList);
     Fsub = obtainF_inverter_global(mpData, rN, ω0, busList, brList, loadList);
-    Gsub = obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L);
+    Gsub = obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict);
     Hsub = obtainH_inverter_global(mpData, rN, ω0, busList, brList, load_L);
     Isub = obtainI_inverter_global(mpData, rN, ω0, busList, brList, loadList, load_L, load_R, load_X);
 
-    Atot = combineSub(busList, brList, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 1);
+    Atot = combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 1);
 
     return Atot;
 end

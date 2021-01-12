@@ -23,12 +23,22 @@ function preproc(mpData)
             push!(brList,k);
         elseif mpData["bus"]["$(t_bus)"]["bus_type"] == 4
             push!(invList,"$(f_bus)");
-            invConnected["$(f_bus)"] = "$(t_bus)";
-            invLine["$(f_bus)"] = k;
+            if "$(f_bus)" in keys(invConnected)
+                # there has already been an inverter connected to f_bus
+                push!(invConnected["$(f_bus)"],"$(t_bus)");
+            else
+                invConnected["$(f_bus)"] = ["$(t_bus)"];
+            end
+            invLine["$(t_bus)"] = k;
         else
             push!(invList,"$(t_bus)");
-            invConnected["$(t_bus)"] = "$(f_bus)";
-            invLine["$(t_bus)"] = k;
+            if "$(f_bus)" in keys(invConnected)
+                # there has already been an inverter connected to f_bus
+                push!(invConnected["$(t_bus)"],"$(f_bus)");
+            else
+                invConnected["$(t_bus)"] = ["$(f_bus)"];
+            end
+            invLine["$(f_bus)"] = k;
         end
     end
 
