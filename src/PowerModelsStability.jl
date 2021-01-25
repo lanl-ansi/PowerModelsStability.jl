@@ -4,7 +4,7 @@ module PowerModelsStability
     using JSON;
 
     include("io/preprocessing.jl")
-    include("io/json_reader.jl")
+    include("io/json.jl")
 
     include("core/inverter.jl")
     include("core/inverter_new.jl")
