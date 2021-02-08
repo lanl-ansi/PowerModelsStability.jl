@@ -1,5 +1,9 @@
 module PowerModelsStability
-    using PowerModels,PowerModelsDistribution,InfrastructureModels,LinearAlgebra;
+    using PowerModels,PowerModelsDistribution,InfrastructureModels;
+    const PM = PowerModels;
+    const PMD = PowerModelsDistribution;
+
+    using LinearAlgebra;
     using JuMP,Ipopt,Gurobi;
     using JSON;
 

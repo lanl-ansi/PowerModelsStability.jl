@@ -1,35 +1,25 @@
-function readJSON(inAdd)
-    inverterData = JSON.parsefile(inAdd);
-    # change the inverterData r/x dimensions
-    for i in 1:length(inverterData["inverters"])
-        rtemp = inverterData["inverters"][i]["r"];
-        xtemp = inverterData["inverters"][i]["x"];
-        inverterData["inverters"][i]["r"] = reshape(hcat(rtemp...), (length(rtemp[1]), length(rtemp)));
-        inverterData["inverters"][i]["x"] = reshape(hcat(xtemp...), (length(xtemp[1]), length(xtemp)));
-    end
-    return inverterData;
-end
-
 function preproc(mpData)
     # obtain the branches that are between two buses and buses with inverters
     brList = [];
     invList = [];
     invLine = Dict();
     invConnected = Dict();
-    for k in keys(mpData["branch"])
-        t_bus = mpData["branch"][k]["t_bus"];
-        f_bus = mpData["branch"][k]["f_bus"];
-        if mpData["bus"]["$(t_bus)"]["bus_type"] != 4 && mpData["bus"]["$(f_bus)"]["bus_type"] != 4
+    for k in keys(mpData["line"])
+        t_bus = mpData["line"][k]["t_bus"];
+        f_bus = mpData["line"][k]["f_bus"];
+        if !("bus_type" in keys(mpData["bus"]["$(t_bus)"])) && !("bus_type" in keys(mpData["bus"]["$(f_bus)"]))
             push!(brList,k);
-        elseif mpData["bus"]["$(t_bus)"]["bus_type"] == 4
-            push!(invList,"$(f_bus)");
-            if "$(f_bus)" in keys(invConnected)
-                # there has already been an inverter connected to f_bus
-                push!(invConnected["$(f_bus)"],"$(t_bus)");
-            else
-                invConnected["$(f_bus)"] = ["$(t_bus)"];
+        elseif ("bus_type" in keys(mpData["bus"]["$(t_bus)"]))
+            if mpData["bus"]["$(t_bus)"]["bus_type"] == 4
+                push!(invList,"$(f_bus)");
+                if "$(f_bus)" in keys(invConnected)
+                    # there has already been an inverter connected to f_bus
+                    push!(invConnected["$(f_bus)"],"$(t_bus)");
+                else
+                    invConnected["$(f_bus)"] = ["$(t_bus)"];
+                end
+                invLine["$(t_bus)"] = k;
             end
-            invLine["$(t_bus)"] = k;
         else
             push!(invList,"$(t_bus)");
             if "$(f_bus)" in keys(invConnected)

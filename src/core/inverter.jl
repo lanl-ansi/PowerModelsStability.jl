@@ -1,7 +1,4 @@
 # inverter ODE construction
-const _PMs = PowerModels;
-const _PMD = PowerModelsDistribution;
-
 function vectorMulti(mp, C, v)
     # given a vector with NL expression and a constant matrix C, calculate the multiplication Cv
     n = length(v);
@@ -9,7 +6,7 @@ function vectorMulti(mp, C, v)
     return multiExpression;
 end
 
-function obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected)
+function obtainA_inverter_global(mpData, opfSol, rN, ω0, busList, invList, invLine, invConnected)
     A = Dict();
 
     for i in busList
@@ -54,17 +51,17 @@ function obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, i
         dQ_iq = -vd0;
 
         A[busConnected][1,2] = 1;
-        A[busConnected][2,:] = -1/τ[i]*[mP[i]*dP_δ;
+        A[busConnected][2,:] = -1/τ[i]*[mpData_math["bus"][i]["mp"]*dP_δ;
                             1;
-                            mP[i]*dP_v;
-                            mP[i]*dP_id[1]; mP[i]*dP_id[2]; mP[i]*dP_id[3];
-                            mP[i]*dP_iq[1]; mP[i]*dP_iq[2]; mP[i]*dP_iq[3]
+                            mpData_math["bus"][i]["mp"]*dP_v;
+                            mpData_math["bus"][i]["mp"]*dP_id[1]; mpData_math["bus"][i]["mp"]*dP_id[2]; mpData_math["bus"][i]["mp"]*dP_id[3];
+                            mpData_math["bus"][i]["mp"]*dP_iq[1]; mpData_math["bus"][i]["mp"]*dP_iq[2]; mpData_math["bus"][i]["mp"]*dP_iq[3]
                             ];
-        A[busConnected][3,:] = -1/τ[i]*[mQ[i]*dQ_δ;
+        A[busConnected][3,:] = -1/τ[i]*[mpData_math["bus"][i]["mq"]*dQ_δ;
                             0;
-                            1+mQ[i]*dQ_v;
-                            mQ[i]*dQ_id[1]; mQ[i]*dQ_id[2]; mP[i]*dQ_id[3];
-                            mQ[i]*dQ_iq[1]; mQ[i]*dQ_iq[2]; mP[i]*dQ_iq[3]
+                            1+mpData_math["bus"][i]["mq"]*dQ_v;
+                            mpData_math["bus"][i]["mq"]*dQ_id[1]; mpData_math["bus"][i]["mq"]*dQ_id[2]; mpData_math["bus"][i]["mp"]*dQ_id[3];
+                            mpData_math["bus"][i]["mq"]*dQ_iq[1]; mpData_math["bus"][i]["mq"]*dQ_iq[2]; mpData_math["bus"][i]["mp"]*dQ_iq[3]
                             ];
         A[busConnected][4:6,1] = inv(L)*dvd_δ;
         A[busConnected][4:6,3] = inv(L)*dvd_v;
@@ -373,13 +370,13 @@ function combineSub(busList, brList, A, B, C, D, E, F, G, H, I, type)
 end
 
 # obtain the global matrix of the
-function obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN)
+function obtainGlobal(mpData,opfSol,ω0,rN)
     # preprocessing
     busList, brList, invList, invConnected, invLine, loadList, vnomList = preproc(mpData);
     load_L,load_R,load_X = procLoad(mpData, loadList, vnomList, ω0);
 
     # obtain A matrix
-    Asub = obtainA_inverter_global(mpData, opfSol, ω0, mP, mQ, τ, rN, busList, invList, invLine, invConnected);
+    Asub = obtainA_inverter_global(mpData, opfSol, rN, ω0, busList, invList, invLine, invConnected);
     Bsub = obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected);
     Csub = obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, load_L);
     Dsub = obtainD_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine);

@@ -1,7 +1,4 @@
 # inverter ODE construction
-const _PMs = PowerModels;
-const _PMD = PowerModelsDistribution;
-
 function vectorMulti(mp, C, v)
     # given a vector with NL expression and a constant matrix C, calculate the multiplication Cv
     n = length(v);
@@ -9,7 +6,7 @@ function vectorMulti(mp, C, v)
     return multiExpression;
 end
 
-function obtainA_inverter_global(mpData, opfSol, rN, busList, invList, invLine, invConnected, inverters, invBusDict)
+function obtainA_inverter_global(mpData, opfSol, rN, ω0, busList, invList, invLine, invConnected, inverters, invBusDict)
     A = Dict();
 
     for invItem in inverters
@@ -56,15 +53,15 @@ function obtainA_inverter_global(mpData, opfSol, rN, busList, invList, invLine, 
         A[i,i][1,2] = 1;
         A[i,i][2,:] = -1/τ[i]*[mpData["bus"][i]["mP"]*dP_δ;
                             1;
-                            mP[i]*dP_v;
-                            mP[i]*dP_id[1]; mP[i]*dP_id[2]; mP[i]*dP_id[3];
-                            mP[i]*dP_iq[1]; mP[i]*dP_iq[2]; mP[i]*dP_iq[3]
+                            mpData_math["bus"][i]["mp"]*dP_v;
+                            mpData_math["bus"][i]["mp"]*dP_id[1]; mpData_math["bus"][i]["mp"]*dP_id[2]; mpData_math["bus"][i]["mp"]*dP_id[3];
+                            mpData_math["bus"][i]["mp"]*dP_iq[1]; mpData_math["bus"][i]["mp"]*dP_iq[2]; mpData_math["bus"][i]["mp"]*dP_iq[3]
                             ];
-        A[i,i][3,:] = -1/τ[i]*[mQ[i]*dQ_δ;
+        A[i,i][3,:] = -1/τ[i]*[mpData_math["bus"][i]["mq"]*dQ_δ;
                             0;
-                            1+mQ[i]*dQ_v;
-                            mQ[i]*dQ_id[1]; mQ[i]*dQ_id[2]; mP[i]*dQ_id[3];
-                            mQ[i]*dQ_iq[1]; mQ[i]*dQ_iq[2]; mP[i]*dQ_iq[3]
+                            1+mpData_math["bus"][i]["mq"]*dQ_v;
+                            mpData_math["bus"][i]["mq"]*dQ_id[1]; mpData_math["bus"][i]["mq"]*dQ_id[2]; mpData_math["bus"][i]["mp"]*dQ_id[3];
+                            mpData_math["bus"][i]["mq"]*dQ_iq[1]; mpData_math["bus"][i]["mq"]*dQ_iq[2]; mpData_math["bus"][i]["mp"]*dQ_iq[3]
                             ];
         A[i,i][4:6,1] = inv(L)*dvd_δ;
         A[i,i][4:6,3] = inv(L)*dvd_v;
@@ -100,7 +97,7 @@ function obtainA_inverter_global(mpData, opfSol, rN, busList, invList, invLine, 
     return A;
 end
 
-function obtainA_inverter_global_var(mpData, pm, rN, busList, invList, invLine, invConnected, inverters, invBusDict)
+function obtainA_inverter_global_var(mpData, pm, rN, ω0, busList, invList, invLine, invConnected, inverters, invBusDict)
     A = Dict();
     for invItem in inverters
         A[invItem,invItem] = Array{Any,2}(zeros(9,9));
@@ -199,7 +196,7 @@ function obtainA_inverter_global_var(mpData, pm, rN, busList, invList, invLine, 
     return A;
 end
 
-function obtainB_inverter_global(mpData, rN, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
+function obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
     B = Dict();
 
     for i in inverters
@@ -221,7 +218,7 @@ function obtainB_inverter_global(mpData, rN, busList, brList, invList, invLine, 
     return B;
 end
 
-function obtainC_inverter_global(mpData, rN, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict)
+function obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict)
     C = Dict();
 
     for i in inverters
@@ -237,7 +234,7 @@ function obtainC_inverter_global(mpData, rN, busList, brList, invList, invLine, 
     return C;
 end
 
-function obtainD_inverter_global(mpData,rN, busList, brList, invList, invLine, inverters, invBusDict)
+function obtainD_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, inverters, invBusDict)
     D = Dict();
 
     for k in brList
@@ -259,7 +256,7 @@ function obtainD_inverter_global(mpData,rN, busList, brList, invList, invLine, i
     return D;
 end
 
-function obtainE_inverter_global(mpData, rN, brList)
+function obtainE_inverter_global(mpData, rN, ω0, brList)
     E = Dict();
 
     for k1 in brList
@@ -289,7 +286,7 @@ function obtainE_inverter_global(mpData, rN, brList)
     return E;
 end
 
-function obtainF_inverter_global(mpData, rN, busList, brList, loadList)
+function obtainF_inverter_global(mpData, rN, ω0, busList, brList, loadList)
     F = Dict();
 
     for k in brList
@@ -312,7 +309,7 @@ function obtainF_inverter_global(mpData, rN, busList, brList, loadList)
     return F;
 end
 
-function obtainG_inverter_global(mpData, rN, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict)
+function obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict)
     G = Dict();
 
     for i in inverters
@@ -328,7 +325,7 @@ function obtainG_inverter_global(mpData, rN, busList, brList, invList, loadList,
     return G;
 end
 
-function obtainH_inverter_global(mpData, rN, busList, brList, load_L)
+function obtainH_inverter_global(mpData, rN, ω0, busList, brList, load_L)
     H = Dict();
 
     for i in busList
@@ -356,7 +353,7 @@ function obtainH_inverter_global(mpData, rN, busList, brList, load_L)
     return H;
 end
 
-function obtainI_inverter_global(mpData, rN, busList, brList, loadList, load_L, load_R, load_X)
+function obtainI_inverter_global(mpData, rN, ω0, busList, brList, loadList, load_L, load_R, load_X)
     I = Dict();
 
     for i in busList
@@ -431,7 +428,7 @@ function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G,
 end
 
 # obtain the global matrix of the
-function obtainGlobal_multi(mpData,opfSol,rN)
+function obtainGlobal_multi(mpData,opfSol,rN,ω0)
     # preprocessing
     busList, brList, invList, invConnected, invLine, loadList, vnomList = preproc(mpData);
     load_L,load_R,load_X = procLoad(mpData, loadList, vnomList, ω0);
@@ -449,15 +446,15 @@ function obtainGlobal_multi(mpData,opfSol,rN)
     end
 
     # obtain A matrix
-    Asub = obtainA_inverter_global(mpData, opfSol, rN, busList, invList, invLine, invConnected, inverters, invBusDict);
-    Bsub = obtainB_inverter_global(mpData, rN, busList, brList, invList, invLine, invConnected, inverters, invBusDict);
-    Csub = obtainC_inverter_global(mpData, rN, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict);
-    Dsub = obtainD_inverter_global(mpData, rN, busList, brList, invList, invLine, inverters, invBusDict);
-    Esub = obtainE_inverter_global(mpData, rN, brList);
-    Fsub = obtainF_inverter_global(mpData, rN, busList, brList, loadList);
-    Gsub = obtainG_inverter_global(mpData, rN, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict);
-    Hsub = obtainH_inverter_global(mpData, rN, busList, brList, load_L);
-    Isub = obtainI_inverter_global(mpData, rN, busList, brList, loadList, load_L, load_R, load_X);
+    Asub = obtainA_inverter_global(mpData, opfSol, rN, ω0, busList, invList, invLine, invConnected, inverters, invBusDict);
+    Bsub = obtainB_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, inverters, invBusDict);
+    Csub = obtainC_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, invConnected, load_L, inverters, invBusDict);
+    Dsub = obtainD_inverter_global(mpData, rN, ω0, busList, brList, invList, invLine, inverters, invBusDict);
+    Esub = obtainE_inverter_global(mpData, rN, ω0, brList);
+    Fsub = obtainF_inverter_global(mpData, rN, ω0, busList, brList, loadList);
+    Gsub = obtainG_inverter_global(mpData, rN, ω0, busList, brList, invList, loadList, load_L, invLine, inverters, invBusDict);
+    Hsub = obtainH_inverter_global(mpData, rN, ω0, busList, brList, load_L);
+    Isub = obtainI_inverter_global(mpData, rN, ω0, busList, brList, loadList, load_L, load_R, load_X);
 
     Atot = combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 1);
 
