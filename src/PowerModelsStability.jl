@@ -1,18 +1,22 @@
 module PowerModelsStability
-    using PowerModels,PowerModelsDistribution,InfrastructureModels;
-    const PM = PowerModels;
-    const PMD = PowerModelsDistribution;
+    import PowerModels
+    import PowerModelsDistribution
+    import InfrastructureModels
 
-    using LinearAlgebra;
-    using JuMP,Ipopt,Gurobi;
-    using JSON;
+    const _PM = PowerModels
+    const _PMD = PowerModelsDistribution
+
+    import JuMP
+    import JSON
+
+    import LinearAlgebra: eigvals, eigvecs, dot, inv, norm
 
     include("io/preprocessing.jl")
     include("io/json.jl")
 
     include("core/inverter.jl")
-    include("core/inverter_new.jl")
     include("core/constraint.jl")
+    include("core/run_model.jl")
 
     include("core/export.jl")
 end
