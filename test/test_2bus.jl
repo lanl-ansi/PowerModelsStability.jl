@@ -1,40 +1,38 @@
-# test the two bus system
-using PowerModels,PowerModelsDistribution,InfrastructureModels,LinearAlgebra;
-using JuMP,Ipopt,Gurobi;
-using JSON;
-include("../src/io/preprocessing.jl");
-include("../src/core/inverter.jl");
+@testset "test the two bus system" begin
+    # load the data
+    filePath = "./data/case2_diag.dss"
+    inverter_data = parse_json("./data/case2_inverters.json")
 
-# load the data
-filePath = "./data/case2_diag.dss";
-# filePath = "../data/case5_phase_drop.dss";
+    # solve the opf problem
+    mpData = PMD.parse_file(filePath)
+    add_inverters!(mpData, inverter_data)
 
-# load the json file for stability-specific parameters
+    # obtain the opf solution and the opf model
+    opfSol,mpData_math = run_mc_opf(mpData, PMD.ACPPowerModel, ipopt_solver)
+    pm = PMD.instantiate_mc_model(mpData_math, PMD.ACPPowerModel, PMD.build_mc_opf)
 
-# solve the opf problem
-mpData = PowerModelsDistribution.parse_file(filePath);
-mpData = transform_data_model(mpData);
-ipopt_solver = with_optimizer(Ipopt.Optimizer, tol=1e-5, print_level=0);
-opfSol = PowerModelsDistribution.run_mc_opf(mpData, PowerModels.ACPPowerModel, ipopt_solver);
+    # change the virtual bus to be an inverter bus for test
+    omega0 = inverter_data["omega0"]
+    rN = inverter_data["rN"]
 
-# change the virtual bus to be an inverter bus for test
-mpData["bus"]["3"]["bus_type"] = 4;
-mP = Dict();
-mQ = Dict();
-mP["3"] = 0.3;
-mQ["3"] = 0.3;
-τ = Dict();
-τ["3"] =1e-4;
-rN = 1000;
-ω0 = 2*pi*60;
-Atot = obtainGlobal(mpData,opfSol,ω0,mP,mQ,τ,rN);
-eigValList = eigvals(Atot);
-statusTemp = true;
-for eig in eigValList
-    if eig.re > 0
-        statusTemp = false;
+    Atot = obtainGlobal_multi(mpData_math,opfSol,omega0,rN)
+    eigValList = eigvals(Atot)
+    eigVectorList = eigvecs(Atot)
+    statusTemp = true
+    vioList = []
+    for eigInd in 1:length(eigValList)
+        eig = eigValList[eigInd]
+        if eig.re > 0
+            statusTemp = false
+            push!(vioList,eigVectorList[eigInd,:])
+        end
     end
-end
-if statusTemp
-    println("The current OPF solution is stable.");
+
+    @test statusTemp
+    @test isempty(vioList)
+
+    if !statusTemp
+        Amg = obtainGlobal_var(mpData,pm,omega0,mP,mQ,tau,rN)
+        constraint_stability(pm, 0, vioList, Amg)
+    end
 end
