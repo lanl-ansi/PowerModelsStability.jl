@@ -1,6 +1,6 @@
 # PowerModelsStability.jl
 
-![CI](https://github.com/lanl-ansi/PowerModelsStability.jl/workflows/CI/badge.svg) ![Documentation](https://github.com/lanl-ansi/PowerModelsStability.jl/workflows/Documentation/badge.svg)
+[![CI](https://github.com/lanl-ansi/PowerModelsStability.jl/workflows/CI/badge.svg)](https://github.com/lanl-ansi/PowerModelsStability.jl/actions?query=workflow%3ACI) [![Documentation](https://github.com/lanl-ansi/PowerModelsStability.jl/workflows/Documentation/badge.svg)](https://lanl-ansi.github.io/PowerModelsStability.jl/stable/)
 
 PowerModelsStability.jl is an extention package of PowerModels.jl and PowerModelsDistribution.jl for Power Network Optimization with Stability Constraints.
 
