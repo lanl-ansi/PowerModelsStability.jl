@@ -79,8 +79,9 @@ function procLoad(mpData, loadList, vnomList, omega0, loadConnections)
         for j in 1:3
             if j in loadConnections[i]
                 if vnomList[i][j] != 0
-                    load_R[i][j,j] = loadList[i][1][j]/vnomList[i][j]^2
-                    load_X[i][j,j] = loadList[i][2][j]/((vnomList[i][j]*cos(θList[j]))^2 - (vnomList[i][j]*sin(θList[j]))^2)
+                    loadRX = vnomList[i][j]^2/(loadList[i][1][j]-im*loadList[i][2][j]);
+                    load_R[i][j,j] = loadRX.re
+                    load_X[i][j,j] = loadRX.im
                 end
             end
         end
