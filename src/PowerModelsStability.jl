@@ -17,6 +17,7 @@ module PowerModelsStability
     include("core/inverter.jl")
     include("core/constraint.jl")
     include("core/run_model.jl")
+    include("core/sdp_cuts.jl")
 
     include("core/export.jl")
 end

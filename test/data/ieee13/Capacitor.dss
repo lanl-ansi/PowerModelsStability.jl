@@ -1,0 +1,2 @@
+New Capacitor.C1 bus1=611.1.2.3 phases=3 kvar=100.0 kv=4.16
+New Capacitor.C2 bus1=675.1.2.3 phases=3 kvar=600.0 kv=4.16

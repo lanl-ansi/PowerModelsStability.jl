@@ -1,0 +1,28 @@
+New Load.D1 Phases=1 Conn=delta Bus1=646.2.3 kV=4.16 kW=230.0 Kvar=132.0
+
+New Load.D2 Phases=1 Conn=delta Bus1=671.1.2 kV=4.16 kW=385.0 Kvar=220.0
+New Load.D3 Phases=1 Conn=delta Bus1=671.2.3 kV=4.16 kW=385.0 Kvar=220.0
+New Load.D4 Phases=1 Conn=delta Bus1=671.3.1 kV=4.16 kW=555.0 Kvar=371.0
+
+New Load.D5 Phases=1 Conn=wye Bus1=632.1 kV=4.16 kW=8.5 Kvar=5.0
+New Load.D6 Phases=1 Conn=wye Bus1=632.2 kV=4.16 kW=33.0 Kvar=19.0
+New Load.D7 Phases=1 Conn=wye Bus1=632.3 kV=4.16 kW=58.5 Kvar=34.0
+
+New Load.D8 Phases=1 Conn=wye Bus1=634.1 kV=4.16 kW=160.0 Kvar=110.0
+New Load.D9 Phases=1 Conn=wye Bus1=634.2 kV=4.16 kW=120.0 Kvar=90.0
+New Load.D10 Phases=1 Conn=wye Bus1=634.3 kV=4.16 kW=120.0 Kvar=90.0
+
+New Load.D11 Phases=1 Conn=wye Bus1=645.2 kV=4.16 kW=170.0 Kvar=125.0
+
+New Load.D12 Phases=1 Conn=wye Bus1=671.1 kV=4.16 kW=8.5 Kvar=5.0
+New Load.D13 Phases=1 Conn=wye Bus1=671.2 kV=4.16 kW=33.0 Kvar=19.0
+New Load.D14 Phases=1 Conn=wye Bus1=671.3 kV=4.16 kW=58.5 Kvar=34.0
+
+New Load.D15 Phases=1 Conn=wye Bus1=611.3 kV=4.16 kW=170.0 Kvar=80.0
+
+New Load.D16 Phases=1 Conn=wye Bus1=652.1 kV=4.16 kW=128.0 Kvar=86.0
+
+New Load.D17 Phases=1 Conn=wye Bus1=675.1 kV=4.16 kW=485.0 Kvar=190.0
+New Load.D18 Phases=1 Conn=wye Bus1=675.2 kV=4.16 kW=68.0 Kvar=60.0
+New Load.D19 Phases=1 Conn=wye Bus1=675.3 kV=4.16 kW=290.0 Kvar=212.0
+

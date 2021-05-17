@@ -1,0 +1,32 @@
+New LineCode.LC1 Nphases=3 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (0.346500 | 0.156000 0.337500 | 0.158000 0.153500 0.341400)
+~ Xmatrix = (1.017900 | 0.501700 1.047800 | 0.423600 0.384900 1.034800)
+
+New LineCode.LC2 Nphases=3 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (0.752600 | 0.158000 0.747500 | 0.156000 0.153500 0.743600)
+~ Xmatrix = (1.181400 | 0.423600 1.198300 | 0.501700 0.384900 1.211200)
+
+New LineCode.LC3 Nphases=2 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (1.329400 | 0.206600 1.323800)
+~ Xmatrix = (1.347100 | 0.459100 1.356900)
+
+New LineCode.LC4 Nphases=2 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (1.323800 | 0.206600 1.329400)
+~ Xmatrix = (1.356900 | 0.459100 1.347100)
+
+New LineCode.LC5 Nphases=1 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (1.329200)
+~ Xmatrix = (1.347500)
+
+New LineCode.LC6 Nphases=1 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (0.798200)
+~ Xmatrix = (0.446300)
+
+New LineCode.LC8 Nphases=3 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (0.384200 | 0.000000 0.387000 | 0.000000 0.000000 0.387100)
+~ Xmatrix = (1.195200 | 0.000000 1.178500 | 0.000000 0.000000 1.206100)
+
+New LineCode.LC10 Nphases=3 BaseFreq=60 Units=mi Kron=N
+~ Rmatrix = (0.798200 | 0.319200 0.789100 | 0.284900 0.319200 0.798200)
+~ Xmatrix = (0.446300 | 0.032800 0.404100 | -0.014300 0.032800 0.446300)
+

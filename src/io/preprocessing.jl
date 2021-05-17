@@ -62,7 +62,7 @@ function preproc(mpData::Dict{String,<:Any})::Tuple
         end
     end
 
-    return busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections
+    return sort!(busList), sort!(brList), sort!(invList), invConnected, invLine, loadList, vnomList, loadConnections
 end
 
 "Obtain the load parameters from the model data"

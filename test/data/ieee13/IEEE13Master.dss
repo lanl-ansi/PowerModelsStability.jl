@@ -1,0 +1,24 @@
+// This is the OpenDSS Master file to solve the test system snapshot power flow.
+
+Clear
+New Circuit.IEEE13
+
+!--------------------------------------------------------!
+Redirect Vsource.dss        ! Distribution system & UPS sources
+Redirect LineCode.dss		! Line configurations for secondary cables
+Redirect Line.dss			! Line segements
+Redirect Capacitor.dss    ! Transformers
+Redirect Load.dss			! Load
+
+!--------------------------Calculate---------------------!
+Set BaseFrequency = 60
+Set VoltageBases = "4.16"  ! Set base voltage(s)
+CalcVoltageBases            ! Estimate the voltage base for each bus
+Solve                   ! Solve the circuit
+
+!-------------Show Snapshot Power Flow Result------------!
+Export Voltages
+Export Currents
+Export Powers
+Export Loads
+Export Summary

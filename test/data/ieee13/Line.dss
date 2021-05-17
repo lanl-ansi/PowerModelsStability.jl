@@ -1,0 +1,30 @@
+New Line.L1 Bus1=632.2.3 Bus2=645.2.3 Phases=2
+~ Length=500.0 Units=ft LineCode=LC3
+
+New Line.L2 Bus1=632.1.2.3 Bus2=633.1.2.3 Phases=3
+~ Length=500.0 Units=ft LineCode=LC2
+
+New Line.L3 Bus1=633.1.2.3 Bus2=634.1.2.3 Phases=3
+~ Length=5280.0 Units=ft LineCode=LC8
+
+New Line.L4 Bus1=645.2.3 Bus2=646.2.3 Phases=2
+~ Length=300.0 Units=ft LineCode=LC3
+
+New Line.L5 Bus1=sourcebus.1.2.3 Bus2=632.1.2.3 Phases=3
+~ Length=2000.0 Units=ft LineCode=LC1
+
+New Line.L6 Bus1=684.1 Bus2=652.1 Phases=1
+~ Length=800.0 Units=ft LineCode=LC6
+
+New Line.L7 Bus1=632.1.2.3 Bus2=671.1.2.3 Phases=3
+~ Length=2000.0 Units=ft LineCode=LC1
+
+New Line.L8 Bus1=671.1.3 Bus2=684.1.3 Phases=2
+~ Length=300.0 Units=ft LineCode=LC4
+
+New Line.L9 Bus1=684.3 Bus2=611.3 Phases=1
+~ Length=300.0 Units=ft LineCode=LC5
+
+New Line.L10 Bus1=671.1.2.3 Bus2=675.1.2.3 Phases=3
+~ Length=500.0 Units=ft LineCode=LC10
+

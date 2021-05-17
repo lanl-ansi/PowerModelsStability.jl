@@ -14,8 +14,9 @@
     # change the virtual bus to be an inverter bus for test
     omega0 = inverter_data["omega0"]
     rN = inverter_data["rN"]
+    invData = invData_proc(mpData_math, omega0)
 
-    Atot = obtainGlobal_multi(mpData_math,opfSol,omega0,rN)
+    Atot = obtainGlobal_multi(mpData_math,opfSol,rN,omega0,invData)
     eigValList = eigvals(Atot)
     eigVectorList = eigvecs(Atot)
     statusTemp = true
@@ -24,7 +25,7 @@
         eig = eigValList[eigInd]
         if eig.re > 0
             statusTemp = false
-            push!(vioList,eigVectorList[eigInd,:])
+            push!(vioList,eigVectorList[:,eigInd])
         end
     end
 

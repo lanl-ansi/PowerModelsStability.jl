@@ -42,7 +42,6 @@ function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, i
         iInd = parse(Int64, i)
         link = mpData["branch"][invLine[i]]
         L = link["br_x"] ./ omega0
-        delta0 = opfSol["solution"]["bus"][i]["va"][1]
         vd0 = opfSol["solution"]["bus"][i]["vm"] .* cos.(opfSol["solution"]["bus"][i]["va"])
         vq0 = opfSol["solution"]["bus"][i]["vm"] .* sin.(opfSol["solution"]["bus"][i]["va"])
         P0 = 0
@@ -64,9 +63,21 @@ function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, i
         dvd_v = cos.(opfSol["solution"]["bus"][i]["va"])
         dvq_v = sin.(opfSol["solution"]["bus"][i]["va"])
         dP_delta = dot(dvd_delta, id0) + dot(dvq_delta, iq0)
+        if abs(dP_delta) < 1e-8
+            dP_delta = 0.0;
+        end
         dQ_delta = -dot(dvd_delta, iq0) + dot(dvq_delta, id0)
+        if abs(dQ_delta) < 1e-8
+            dQ_delta = 0.0;
+        end
         dP_v = dot(dvd_v, id0) + dot(dvq_v, iq0)
+        if abs(dP_v) < 1e-8
+            dP_v = 0.0;
+        end
         dQ_v = -dot(dvd_v, iq0) + dot(dvq_v, id0)
+        if abs(dQ_v) < 1e-8
+            dQ_v = 0.0;
+        end
         dP_id = vd0
         dP_iq = vq0
         dQ_id = vq0
@@ -132,64 +143,76 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
         link = mpData["branch"][invLine[iBus]]
         L = link["br_x"] ./ omega0
         i = mpData["bus"][iBus]["index"]
-        delta0 = PM.var(pm, 0, :va, i)[1]
-        vmList = PM.var(pm, 0, :vm, i)
-        vaList = PM.var(pm, 0, :va, i)
-        vd0 = [JuMP.@NLexpression(pm.model,vmList.data[j] * cos(vaList.data[j])) for j in 1:length(vmList.data)]
-        vq0 = [JuMP.@NLexpression(pm.model,vmList.data[j] * sin(vaList.data[j])) for j in 1:length(vmList.data)]
-        P0 = JuMP.@NLexpression(pm.model,0)
-        Q0 = JuMP.@NLexpression(pm.model,0)
-        for g in keys(mpData["gen"])
-            if "$(mpData["gen"][g]["gen_bus"])" == i
-                P0 += sum(PM.var(pm, 0, :pg, g))
-                Q0 += sum(PM.var(pm, 0, :qg, g))
-            end
-        end
+        vrList = _PMD.var(pm, 0, :vr, i)
+        viList = _PMD.var(pm, 0, :vi, i)
+        # vd0 = [JuMP.@NLexpression(pm.model,vrList.data[j]) for j in 1:3]
+        # vq0 = [JuMP.@NLexpression(pm.model,viList.data[j]) for j in 1:3]
+        # P0 = JuMP.@NLexpression(pm.model,0)
+        # Q0 = JuMP.@NLexpression(pm.model,0)
+        # for g in keys(mpData["gen"])
+        #     if "$(mpData["gen"][g]["gen_bus"])" == i
+        #         P0 += sum(_PMD.var(pm, 0, :pg, g))
+        #         Q0 += sum(_PMD.var(pm, 0, :qg, g))
+        #     end
+        # end
         id0 = Array{Any,1}([0,0,0])
         iq0 = Array{Any,1}([0,0,0])
         for j in 1:3
-            id0[j] = JuMP.@NLexpression(pm.model,(vd0[j] * P0 / 3 + vq0[j] * Q0 / 3) / (vmList.data[j]^2))
-            iq0[j] = JuMP.@NLexpression(pm.model,(vq0[j] * P0 / 3 - vd0[j] * Q0 / 3) / (vmList.data[j]^2))
+            id0[j] = JuMP.@NLexpression(pm.model,(vrList.data[j] * sum(sum(_PMD.var(pm, 0, :pg, g)) for g in keys(mpData["gen"]) if "$(mpData["gen"][g]["gen_bus"])" == i) / 3 +
+                viList.data[j] * sum(sum(_PMD.var(pm, 0, :qg, g)) for g in keys(mpData["gen"]) if "$(mpData["gen"][g]["gen_bus"])" == i) / 3) /
+                (vrList.data[j]^2 + viList.data[j]^2))
+            iq0[j] = JuMP.@NLexpression(pm.model,(viList.data[j] * sum(sum(_PMD.var(pm, 0, :pg, g)) for g in keys(mpData["gen"]) if "$(mpData["gen"][g]["gen_bus"])" == i) / 3 -
+                vrList.data[j] * sum(sum(_PMD.var(pm, 0, :qg, g)) for g in keys(mpData["gen"]) if "$(mpData["gen"][g]["gen_bus"])" == i) / 3) /
+                (vrList.data[j]^2 + viList.data[j]^2))
         end
-        dvd_delta = [JuMP.@NLexpression(pm.model,-vq0[j]) for j in 1:length(vq0)]
-        dvq_delta = [JuMP.@NLexpression(pm.model,vd0[j]) for j in 1:length(vd0)]
-        dvd_v = [JuMP.@NLexpression(pm.model,cos(vaList.data[j])) for j in 1:length(vaList.data)]
-        dvq_v = [JuMP.@NLexpression(pm.model,sin(vaList.data[j])) for j in 1:length(vaList.data)]
-        dP_delta = JuMP.@NLexpression(pm.model,sum(dvd_delta[j] * id0[j] for j in 1:length(dvd_delta)) + sum(dvq_delta[j] * iq0[j] for j in 1:length(dvq_delta)))
-        dQ_delta = JuMP.@NLexpression(pm.model,-sum(dvd_delta[j] * iq0[j] for j in 1:length(dvd_delta)) + sum(dvq_delta[j] * id0[j] for j in 1:length(dvq_delta)))
-        dP_v = JuMP.@NLexpression(pm.model,sum(dvd_v[j] * id0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * iq0[j] for j in 1:length(dvq_v)))
-        dQ_v = JuMP.@NLexpression(pm.model,-sum(dvd_v[j] * iq0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * id0[j] for j in 1:length(dvq_v)))
-        dP_id = vd0
-        dP_iq = vq0
-        dQ_id = vq0
-        dQ_iq = [JuMP.@NLexpression(pm.model,-vd0[i]) for i in 1:length(vd0)]
+        # dvd_delta = [JuMP.@NLexpression(pm.model,-vq0[j]) for j in 1:length(vq0)]
+        # dvq_delta = [JuMP.@NLexpression(pm.model,vd0[j]) for j in 1:length(vd0)]
+        dvd_v = [JuMP.@NLexpression(pm.model,vrList.data[j]/sqrt(vrList.data[j]^2 + viList.data[j]^2)) for j in 1:length(vrList.data)]
+        dvq_v = [JuMP.@NLexpression(pm.model,viList.data[j]/sqrt(vrList.data[j]^2 + viList.data[j]^2)) for j in 1:length(viList.data)]
+        # dP_delta = JuMP.@NLexpression(pm.model,sum(-viList.data[j] * id0[j] for j in 1:3) + sum(vrList.data[j] * iq0[j] for j in 1:3))
+        # dQ_delta = JuMP.@NLexpression(pm.model,-sum(-viList.data[j] * iq0[j] for j in 1:3) + sum(vrList.data[j] * id0[j] for j in 1:3))
+        # dP_v = JuMP.@NLexpression(pm.model,sum(dvd_v[j] * id0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * iq0[j] for j in 1:length(dvq_v)))
+        # dQ_v = JuMP.@NLexpression(pm.model,-sum(dvd_v[j] * iq0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * id0[j] for j in 1:length(dvq_v)))
+        # dP_id = vd0
+        # dP_iq = vq0
+        # dQ_id = vq0
+        # dQ_iq = [JuMP.@NLexpression(pm.model,-vd0[i]) for i in 1:length(vd0)]
 
         A[iBus,iBus][1,2] = 1
-        A[iBus,iBus][2,:] = [JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_delta)
+        A[iBus,iBus][2,:] = [JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] *
+                                (sum(-viList.data[j] * id0[j] for j in 1:3) + sum(vrList.data[j] * iq0[j] for j in 1:3)))
                             -1 / mpData["bus"][iBus]["tau"]
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_v)
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_id[1])
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_id[2])
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_id[3])
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_iq[1])
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_iq[2])
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * dP_iq[3])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] *
+                                (sum(dvd_v[j] * id0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * iq0[j] for j in 1:length(dvq_v))))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * vrList.data[1])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * vrList.data[2])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * vrList.data[3])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * viList.data[1])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * viList.data[2])
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * viList.data[3])
                             ]
-        A[iBus,iBus][3,:] = [JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mq"] * dQ_delta)
+        A[iBus,iBus][3,:] = [JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mq"] *
+                                (-sum(-viList.data[j] * iq0[j] for j in 1:3) + sum(vrList.data[j] * id0[j] for j in 1:3)))
                             0
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (1 + mpData["bus"][iBus]["mq"] * dQ_v))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_id[1]))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_id[2]))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * dQ_id[3]))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_iq[1]))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_iq[2]))
-                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * dQ_iq[3]))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (1 + mpData["bus"][iBus]["mq"] *
+                                (-sum(dvd_v[j] * iq0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * id0[j] for j in 1:length(dvq_v)))))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * viList.data[1]))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * viList.data[2]))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * viList.data[3]))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * (-vrList.data[1])))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * (-vrList.data[2])))
+                            JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * (-vrList.data[3])))
                             ]
-        A[iBus,iBus][4:6,1] = vectorMulti(pm.model, inv(L), dvd_delta)
+        iL = inv(L)
+        for matj in 1:3
+            # A[iBus,iBus][j+3,1] = JuMP.@NLexpression(pm.model,sum(, [-viList.data[j] for j in 1:3])
+            A[iBus,iBus][matj+3,1] = JuMP.@NLexpression(pm.model,sum(iL[matj,j]*(-viList.data[j]) for j in 1:3))
+            # A[iBus,iBus][7:9,1] = vectorMulti(pm.model, inv(L), [vrList.data[j] for j in 1:3])
+            A[iBus,iBus][matj+6,1] = JuMP.@NLexpression(pm.model,sum(iL[matj,j]*(vrList.data[j]) for j in 1:3))
+        end
         A[iBus,iBus][4:6,3] = vectorMulti(pm.model, inv(L), dvd_v)
         A[iBus,iBus][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
         A[iBus,iBus][4:6,7:9] = inv(L) * link["br_x"]
-        A[iBus,iBus][7:9,1] = vectorMulti(pm.model, inv(L), dvq_delta)
         A[iBus,iBus][7:9,3] = vectorMulti(pm.model, inv(L), dvq_v)
         A[iBus,iBus][7:9,4:6] = -inv(L) * link["br_x"]
         A[iBus,iBus][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
@@ -310,6 +333,14 @@ function obtainE_inverter_global(mpData, rN, omega0, brList)
                 else
                     E[k1,k2][1:3,1:3] = rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
                     E[k1,k2][4:6,4:6] = rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
+                end
+            elseif mpData["branch"][k1]["t_bus"] == mpData["branch"][k2]["f_bus"]
+                if mpData["branch"][k1]["f_bus"] == mpData["branch"][k2]["t_bus"]
+                    E[k1,k2][1:3,1:3] = 2 * rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
+                    E[k1,k2][4:6,4:6] = 2 * rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
+                else
+                    E[k1,k2][1:3,1:3] = rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
+                    E[k1,k2][4:6,4:6] = rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
                 end
             end
         end
@@ -466,8 +497,8 @@ function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G,
     return Atot
 end
 
-"obtain the global matrix of the small-signal stability control"
-function obtainGlobal_multi(mpData, opfSol, rN, omega0)
+"Obtain auxiliary inverter data"
+function invData_proc(mpData, omega0)
     # preprocessing
     busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = preproc(mpData)
     load_L, load_R, load_X = procLoad(mpData, loadList, vnomList, omega0, loadConnections)
@@ -483,6 +514,12 @@ function obtainGlobal_multi(mpData, opfSol, rN, omega0)
             invBusDict[invItem] = i
         end
     end
+    return [busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections, load_L, load_R, load_X, inverters, invBusDict]
+end
+
+"obtain the global matrix of the small-signal stability control"
+function obtainGlobal_multi(mpData, opfSol, rN, omega0, invData)
+    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections, load_L, load_R, load_X, inverters, invBusDict = invData
 
     # obtain A matrix
     Asub = obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, invLine, invConnected, inverters, invBusDict)
