@@ -1,9 +1,7 @@
 module PowerModelsStability
-    import PowerModels
     import PowerModelsDistribution
-    import InfrastructureModels
+    import PowerModelsDistribution: ids, ref, var, sol, con, nw_id_default
 
-    const _PM = PowerModels
     const _PMD = PowerModelsDistribution
 
     import JuMP

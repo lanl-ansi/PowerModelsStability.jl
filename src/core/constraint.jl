@@ -39,7 +39,7 @@ function obtainGlobal_var(mpData, pm, rN, omega0)
 end
 
 "Create constraints to append to the power models"
-function constraint_stability(pm::PowerModels.AbstractPowerModel, nw::Int, eigenVectorList::Array{Any,1}, Amg::Array{Any,2})
+function constraint_stability(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, eigenVectorList::Array{Any,1}, Amg::Array{Any,2})
     # create constraint generate by the eigenvalue analysis
     for ev in eigenVectorList
         evMulti_real = matrixMulti(pm.model, Amg, real(ev))
