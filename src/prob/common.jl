@@ -9,6 +9,7 @@ instantiate_mc_model(
         build_method;
         eng2math_extensions=[_eng2math_inverter_bus!, eng2math_extensions...],
         eng2math_passthrough=_pms_eng2math_passthrough,
+        global_keys=_pms_global_keys,
         kwargs...)
 
 solve_mc_opf(
@@ -22,4 +23,5 @@ solve_mc_opf(
         solver;
         eng2math_extensions=[_eng2math_inverter_bus!, eng2math_extensions...],
         eng2math_passthrough=_pms_eng2math_passthrough,
+        global_keys=_pms_global_keys,
         kwargs...)

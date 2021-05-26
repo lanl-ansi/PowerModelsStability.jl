@@ -15,6 +15,9 @@ const _pms_eng2math_passthrough = Dict{String,Vector{String}}(
 )
 
 
+const _pms_global_keys = Set{String}(["omega0", "rN"])
+
+
 transform_data_model(
     data_eng::Dict{String,<:Any};
     eng2math_extensions::Vector{<:Function}=Function[],
@@ -22,4 +25,5 @@ transform_data_model(
         data_eng;
         eng2math_extensions=[_eng2math_inverter_bus!, eng2math_extensions...],
         eng2math_passthrough=_pms_eng2math_passthrough,
+        global_keys=_pms_global_keys,
         kwargs...)
