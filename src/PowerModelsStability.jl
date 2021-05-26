@@ -17,6 +17,7 @@ module PowerModelsStability
 
     include("io/preprocessing.jl")
     include("io/json.jl")
+    include("io/common.jl")
 
     include("prob/common.jl")
 
