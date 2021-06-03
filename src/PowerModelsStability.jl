@@ -1,9 +1,7 @@
 module PowerModelsStability
-    import PowerModels
     import PowerModelsDistribution
-    import InfrastructureModels
+    import PowerModelsDistribution: ids, ref, var, sol, con, nw_id_default
 
-    const _PM = PowerModels
     const _PMD = PowerModelsDistribution
 
     import JuMP
@@ -11,12 +9,17 @@ module PowerModelsStability
 
     import LinearAlgebra: eigvals, eigvecs, dot, inv, norm
 
-    include("io/preprocessing.jl")
-    include("io/json.jl")
-
     include("core/inverter.jl")
     include("core/constraint.jl")
-    include("core/run_model.jl")
+    include("core/data.jl")
+
+    include("data_model/eng2math.jl")
+
+    include("io/preprocessing.jl")
+    include("io/json.jl")
+    include("io/common.jl")
+
+    include("prob/common.jl")
 
     include("core/export.jl")
 end

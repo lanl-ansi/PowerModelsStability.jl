@@ -132,17 +132,17 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
         link = mpData["branch"][invLine[iBus]]
         L = link["br_x"] ./ omega0
         i = mpData["bus"][iBus]["index"]
-        delta0 = PM.var(pm, 0, :va, i)[1]
-        vmList = PM.var(pm, 0, :vm, i)
-        vaList = PM.var(pm, 0, :va, i)
+        delta0 = _PMD.var(pm, 0, :va, i)[1]
+        vmList = _PMD.var(pm, 0, :vm, i)
+        vaList = _PMD.var(pm, 0, :va, i)
         vd0 = [JuMP.@NLexpression(pm.model,vmList.data[j] * cos(vaList.data[j])) for j in 1:length(vmList.data)]
         vq0 = [JuMP.@NLexpression(pm.model,vmList.data[j] * sin(vaList.data[j])) for j in 1:length(vmList.data)]
         P0 = JuMP.@NLexpression(pm.model,0)
         Q0 = JuMP.@NLexpression(pm.model,0)
         for g in keys(mpData["gen"])
             if "$(mpData["gen"][g]["gen_bus"])" == i
-                P0 += sum(PM.var(pm, 0, :pg, g))
-                Q0 += sum(PM.var(pm, 0, :qg, g))
+                P0 += sum(_PMD.var(pm, 0, :pg, g))
+                Q0 += sum(_PMD.var(pm, 0, :qg, g))
             end
         end
         id0 = Array{Any,1}([0,0,0])

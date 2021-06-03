@@ -4,7 +4,7 @@ import PowerModelsDistribution
 import Ipopt
 
 const PMD = PowerModelsDistribution
-PMD._PM.silence()
+PMD.silence!()
 
 import LinearAlgebra: eigvals, eigvecs
 
