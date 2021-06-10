@@ -2,7 +2,7 @@
 
 ## staged
 
-- none
+- Fix bug in `add_inverters!` where grounded bus / wye gens were being added even if the data was already kron reduced
 
 ## v0.2.0
 

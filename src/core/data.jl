@@ -1,12 +1,14 @@
 "add the inverters from the read-in json dictionary"
 function add_inverters!(pmd_data::Dict{String,<:Any}, inverter_data::Dict{String,<:Any}; pop_solar::Bool=false)
     for (invInd, inverter) in enumerate(get(inverter_data, "inverters", []))
+        bus_gen_terms = get(pmd_data, "is_kron_reduced", false) ? collect(1:3) : collect(1:4)
+
         # add bus/bus_lookup
         _PMD.add_bus!(
             pmd_data,
             "inverter_$(invInd)";
-            terminals=[1,2,3,4],
-            grounded=[4],
+            terminals=bus_gen_terms,
+            grounded=get(pmd_data, "is_kron_reduced", false) ? Int[] : [4],
             rg=[0.0],
             xg=[0.0],
             mp=inverter["mp"],
@@ -30,7 +32,7 @@ function add_inverters!(pmd_data::Dict{String,<:Any}, inverter_data::Dict{String
             phases=3
         )
         # TODO bug in PMD?
-        pmd_data["generator"]["invGen_$(invInd)"]["connections"] = Vector{Int}([1,2,3,4])
+        pmd_data["generator"]["invGen_$(invInd)"]["connections"] = bus_gen_terms
 
         # add connecting branch
         _PMD.add_line!(
