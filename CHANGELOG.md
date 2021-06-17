@@ -2,6 +2,11 @@
 
 ## staged
 
+- none
+
+## v0.2.1
+
+- Updated README and docs for initial release to Julia Registry
 - Fix bug in `add_inverters!` where grounded bus / wye gens were being added even if the data was already kron reduced
 
 ## v0.2.0

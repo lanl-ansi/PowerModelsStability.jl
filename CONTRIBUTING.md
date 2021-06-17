@@ -6,16 +6,9 @@ In this guide we aim to communicate the various code standards expected for this
 
 Documentation should be included for all new publically exported additions to the code base
 
-- All new formulation should have their hierarchies be documented in `/docs/src/formulations.md`
-- All new formulations should be summarized in `/docs/src/formulation-details.md`
-- Additions to the `ENGINEERING` data model should be added to `/docs/src/eng-data-model.md`
-- All new constaints should have their mathematical form in their associated docstring
-- The usage details for all new exported functions should be documented via an associated docstring, with the exception of constraint and variable creation functions, which should contain mathematical details in their docstring
-- _Summaries_ of the purpose of new _unexported_ functions should be documented via an associated docstring
-
 ### Examples
 
-In the case of new functionality, like helper functions for data manipulation or model debugging, or changes to building or running models, Jupyter notebooks should be utilized to demonstrate these features, and are required to exist in the `/examples` directory.
+In the case of new functionality, like helper functions for data manipulation or model debugging, or changes to building or running models, notebooks should be utilized to demonstrate these features, and are required to exist in the `/examples` directory.
 
 ## Style Conventions
 
