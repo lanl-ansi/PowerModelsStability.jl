@@ -3,6 +3,7 @@ using PowerModelsStability
 
 makedocs(
     sitename = "PowerModelsStability",
+    authors = "Haoxiang Yang, Harsha Nagarajan, David M Fobes",
     format = Documenter.HTML(
         analytics = "",
         mathengine = Documenter.MathJax(),
@@ -11,8 +12,6 @@ makedocs(
     ),
     modules = [PowerModelsStability],
     strict = false,
-    sitename = "PowerModelsStability",
-    authors = "Haoxiang Yang, Harsha Nagarajan, David M Fobes",
     pages = [
         "Introduction" => "index.md",
         "installation.md",
