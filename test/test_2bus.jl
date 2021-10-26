@@ -32,7 +32,7 @@
     @test isempty(vioList)
 
     if !statusTemp
-        Amg = obtainGlobal_var(mpData,pm,rN,omega0)
+        Amg = obtainGlobal_var(mpData_math,pm,rN,omega0)
         constraint_stability(pm, 0, vioList, Amg)
     end
 end
