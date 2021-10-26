@@ -5,6 +5,7 @@
 
     # solve the opf problem
     mpData = parse_file(filePath, inverter_file)
+    mpData["settings"]["sbase_default"] = 1e5
 
     # obtain the opf solution and the opf model
     mpData_math = transform_data_model(mpData)
