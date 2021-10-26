@@ -5,6 +5,7 @@
 
     # solve the opf problem
     mpData = parse_file(filePath, inverter_file)
+    mpData["settings"]["sbase_default"] = 1e5
 
     # obtain the opf solution and the opf model
     mpData_math = transform_data_model(mpData)
@@ -32,7 +33,7 @@
     @test isempty(vioList)
 
     if !statusTemp
-        Amg = obtainGlobal_var(mpData,pm,omega0,mP,mQ,tau,rN)
+        Amg = obtainGlobal_var(mpData_math,pm,rN,omega0)
         constraint_stability(pm, 0, vioList, Amg)
     end
 end
