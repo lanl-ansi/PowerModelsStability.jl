@@ -10,7 +10,7 @@ import LinearAlgebra: eigvals, eigvecs
 
 using Test
 
-ipopt_solver = PMD.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-5, "print_level" => 0)
+ipopt_solver = PMD.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
 
 @testset "PowerModelsStability" begin
     include("test_2bus.jl")
