@@ -2,7 +2,9 @@
 
 ## staged
 
-- none
+## v0.2.2
+
+- Added support for PowerModelsDistribution v0.12
 
 ## v0.2.1
 
@@ -21,6 +23,7 @@
 - Initial release
 
 ## v0.0.1
+
 - Initial Commit
 - Create basic code structures for future development
 - Add the process to generate state space matrix and obtain eigenvalues
