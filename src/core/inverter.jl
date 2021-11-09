@@ -4,12 +4,15 @@
 function vectorMulti(mp, C, v)
     n = length(v)
     multiExpression = [JuMP.@NLexpression(mp, sum(C[i,j] * v[j] for j in 1:n)) for i in 1:n]
+
     return multiExpression
 end
 
 "invert the matrix"
 function inverseMat(originMat, connection)
+    
     invM = zeros(3, 3)
+
     if norm(originMat) > 0
         try
             invOri = inv(originMat)
@@ -24,6 +27,7 @@ function inverseMat(originMat, connection)
             end
         end
     end
+    
     return invM
 end
 
@@ -185,12 +189,12 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_iq[2]))
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * dQ_iq[3]))
                             ]
-        A[iBus,iBus][4:6,1] = vectorMulti(pm.model, inv(L), dvd_delta)
-        A[iBus,iBus][4:6,3] = vectorMulti(pm.model, inv(L), dvd_v)
+        A[iBus,iBus][4:6,1] = PMS.vectorMulti(pm.model, inv(L), dvd_delta)
+        A[iBus,iBus][4:6,3] = PMS.vectorMulti(pm.model, inv(L), dvd_v)
         A[iBus,iBus][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
         A[iBus,iBus][4:6,7:9] = inv(L) * link["br_x"]
-        A[iBus,iBus][7:9,1] = vectorMulti(pm.model, inv(L), dvq_delta)
-        A[iBus,iBus][7:9,3] = vectorMulti(pm.model, inv(L), dvq_v)
+        A[iBus,iBus][7:9,1] = PMS.vectorMulti(pm.model, inv(L), dvq_delta)
+        A[iBus,iBus][7:9,3] = PMS.vectorMulti(pm.model, inv(L), dvq_v)
         A[iBus,iBus][7:9,4:6] = -inv(L) * link["br_x"]
         A[iBus,iBus][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
     end
@@ -469,8 +473,8 @@ end
 "obtain the global matrix of the small-signal stability control"
 function obtainGlobal_multi(mpData, opfSol, rN, omega0)
     # preprocessing
-    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = preproc(mpData)
-    load_L, load_R, load_X = procLoad(mpData, loadList, vnomList, omega0, loadConnections)
+    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preproc(mpData)
+    load_L, load_R, load_X = PMS.procLoad(mpData, loadList, vnomList, omega0, loadConnections)
 
     inverters = []
     invBusDict = Dict()
@@ -485,17 +489,17 @@ function obtainGlobal_multi(mpData, opfSol, rN, omega0)
     end
 
     # obtain A matrix
-    Asub = obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, invLine, invConnected, inverters, invBusDict)
-    Bsub = obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
-    Csub = obtainC_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, load_L, loadConnections, inverters, invBusDict)
-    Dsub = obtainD_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, inverters, invBusDict)
-    Esub = obtainE_inverter_global(mpData, rN, omega0, brList)
-    Fsub = obtainF_inverter_global(mpData, rN, omega0, busList, brList, loadList, loadConnections)
-    Gsub = obtainG_inverter_global(mpData, rN, omega0, busList, brList, invList, loadList, load_L, loadConnections, invLine, inverters, invBusDict)
-    Hsub = obtainH_inverter_global(mpData, rN, omega0, busList, brList, load_L, loadConnections)
-    Isub = obtainI_inverter_global(mpData, rN, omega0, busList, brList, loadList, load_L, load_R, load_X, loadConnections)
+    Asub = PMS.obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, invLine, invConnected, inverters, invBusDict)
+    Bsub = PMS.obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
+    Csub = PMS.obtainC_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, load_L, loadConnections, inverters, invBusDict)
+    Dsub = PMS.obtainD_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, inverters, invBusDict)
+    Esub = PMS.obtainE_inverter_global(mpData, rN, omega0, brList)
+    Fsub = PMS.obtainF_inverter_global(mpData, rN, omega0, busList, brList, loadList, loadConnections)
+    Gsub = PMS.obtainG_inverter_global(mpData, rN, omega0, busList, brList, invList, loadList, load_L, loadConnections, invLine, inverters, invBusDict)
+    Hsub = PMS.obtainH_inverter_global(mpData, rN, omega0, busList, brList, load_L, loadConnections)
+    Isub = PMS.obtainI_inverter_global(mpData, rN, omega0, busList, brList, loadList, load_L, load_R, load_X, loadConnections)
 
-    Atot = combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 1)
+    Atot = PMS.combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 1)
 
     return Atot
 end

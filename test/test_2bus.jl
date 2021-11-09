@@ -4,7 +4,7 @@
     inverter_file = "../test/data/case2_inverters.json"
 
     # solve the opf problem
-    mpData = parse_file(filePath, inverter_file)
+    mpData = PMS.parse_file(filePath, inverter_file)
     mpData["settings"]["sbase_default"] = 1e5
 
     # obtain the opf solution and the opf model
@@ -16,16 +16,16 @@
     omega0 = mpData["omega0"]
     rN = mpData["rN"]
 
-    Atot = obtainGlobal_multi(mpData_math,opfSol,omega0,rN)
-    eigValList = eigvals(Atot)
-    eigVectorList = eigvecs(Atot)
+    Atot = PMS.obtainGlobal_multi(mpData_math,opfSol,omega0,rN)
+    eigValList = LA.eigvals(Atot)
+    eigVectorList = LA.eigvecs(Atot)
     statusTemp = true
     vioList = []
     for eigInd in 1:length(eigValList)
         eig = eigValList[eigInd]
         if eig.re > 0
             statusTemp = false
-            push!(vioList,eigVectorList[eigInd,:])
+            push!(vioList, eigVectorList[eigInd,:])
         end
     end
 
@@ -33,7 +33,7 @@
     @test isempty(vioList)
 
     if !statusTemp
-        Amg = obtainGlobal_var(mpData_math,pm,rN,omega0)
-        constraint_stability(pm, 0, vioList, Amg)
+        Amg = PMS.obtainGlobal_var(mpData_math,pm,rN,omega0)
+        PMS.constraint_stability(pm, 0, vioList, Amg)
     end
 end

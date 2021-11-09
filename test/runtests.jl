@@ -4,6 +4,8 @@ import PowerModelsDistribution
 import Ipopt
 
 const PMD = PowerModelsDistribution
+const PMS = PowerModelsStability
+
 PMD.silence!()
 
 import LinearAlgebra: eigvals, eigvecs
