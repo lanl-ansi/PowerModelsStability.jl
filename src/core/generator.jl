@@ -3,6 +3,7 @@
 # obtain the A matrix for diesel generator
 # To-do: need to change the bus_type input to an external source
 function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
+
     # obtain the voltage solution
     T = 2 / 3 * [1 cos(-2 * pi / 3) cos(2 * pi / 3)
              0 -sin(-2 * pi / 3) -sin(2 * pi / 3)
@@ -19,6 +20,7 @@ function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
     iQ = Dict()
     A = Dict()
     errorList = []
+    
     for i in iBusList
         if mpData["bus"][i]["bus_type"] == 3
             delta0[i] = opfSol["solution"]["bus"][i]["va"][1]

@@ -1,7 +1,10 @@
+import LinearAlgebra: eigvals, eigvecs, dot, inv, norm
+
 # inverter ODE construction, this script allows multiple inverter buses connect to the same bus
 
 "given a vector with NL expression and a constant matrix C, calculate the multiplication Cv"
 function vectorMulti(mp, C, v)
+    
     n = length(v)
     multiExpression = [JuMP.@NLexpression(mp, sum(C[i,j] * v[j] for j in 1:n)) for i in 1:n]
 
@@ -33,6 +36,7 @@ end
 
 "Obtain the submatrix A, with the opf solution given"
 function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, invLine, invConnected, inverters, invBusDict)
+    
     A = Dict()
 
     for invItem in inverters
@@ -125,6 +129,7 @@ end
 
 "Obtain the submatrix A, with the opf problem variables in"
 function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, invLine, invConnected, inverters, invBusDict)
+    
     A = Dict()
     for invItem in inverters
         A[invItem,invItem] = Array{Any,2}(zeros(9, 9))
@@ -225,6 +230,7 @@ end
 
 "Obtain the submatrix B, with the opf solution given"
 function obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, inverters, invBusDict)
+
     B = Dict()
 
     for i in inverters
@@ -235,19 +241,21 @@ function obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, i
             iInd = parse(Int64, iBus)
             L = mpData["branch"][invLine[i]]["br_x"] ./ omega0
             if mpData["branch"][k]["f_bus"] == iInd
-                B[i,k][4:6,1:3] = rN * inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
-                B[i,k][7:9,4:6] = rN * inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
+                B[i,k][4:6,1:3] = rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
+                B[i,k][7:9,4:6] = rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
             elseif mpData["branch"][k]["t_bus"] == iInd
-                B[i,k][4:6,1:3] = -rN * inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
-                B[i,k][7:9,4:6] = -rN * inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
+                B[i,k][4:6,1:3] = -rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
+                B[i,k][7:9,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
             end
         end
     end
+
     return B
-    end
+end
 
 "Obtain the submatrix C, with the opf solution given"
 function obtainC_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, invConnected, load_L, loadConnections, inverters, invBusDict)
+    
     C = Dict()
 
     for i in inverters
@@ -256,15 +264,17 @@ function obtainC_inverter_global(mpData, rN, omega0, busList, brList, invList, i
         iInd = parse(Int64, i)
         if invBusDict[i] in keys(load_L)
             L = load_L[invBusDict[i]]
-            C[i,invBusDict[i]][4:6,1:3] = rN * inverseMat(L, loadConnections[invBusDict[i]])
-            C[i,invBusDict[i]][7:9,4:6] = rN * inverseMat(L, loadConnections[invBusDict[i]])
+            C[i,invBusDict[i]][4:6,1:3] = rN * PMS.inverseMat(L, loadConnections[invBusDict[i]])
+            C[i,invBusDict[i]][7:9,4:6] = rN * PMS.inverseMat(L, loadConnections[invBusDict[i]])
         end
     end
+
     return C
 end
 
     "Obtain the submatrix D, with the opf solution given"
 function obtainD_inverter_global(mpData, rN, omega0, busList, brList, invList, invLine, inverters, invBusDict)
+    
     D = Dict()
 
     for k in brList
@@ -274,15 +284,16 @@ function obtainD_inverter_global(mpData, rN, omega0, busList, brList, invList, i
             # it is a regular bus
             D[k,i] = zeros(6, 9)
             if iBus == "$(mpData["branch"][k]["f_bus"])"
-                D[k,i][1:3,4:6] = rN * inverseMat(L, mpData["branch"][k]["f_connections"])
-                D[k,i][4:6,7:9] = rN * inverseMat(L, mpData["branch"][k]["f_connections"])
+                D[k,i][1:3,4:6] = rN * PMS.inverseMat(L, mpData["branch"][k]["f_connections"])
+                D[k,i][4:6,7:9] = rN * PMS.inverseMat(L, mpData["branch"][k]["f_connections"])
             end
             if iBus == "$(mpData["branch"][k]["t_bus"])"
-                D[k,i][1:3,4:6] = -rN * inverseMat(L, mpData["branch"][k]["t_connections"])
-                D[k,i][4:6,7:9] = -rN * inverseMat(L, mpData["branch"][k]["t_connections"])
+                D[k,i][1:3,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][k]["t_connections"])
+                D[k,i][4:6,7:9] = -rN * PMS.inverseMat(L, mpData["branch"][k]["t_connections"])
             end
         end
     end
+
     return D
 end
 
@@ -295,25 +306,28 @@ function obtainE_inverter_global(mpData, rN, omega0, brList)
         for k2 in brList
             E[k1,k2] = zeros(6, 6)
             if k1 == k2
-                E[k1,k2][1:3,1:3] = -2 * rN * inverseMat(L, mpData["branch"][k1]["f_connections"]) -
-                    inverseMat(L * mpData["branch"][k1]["br_r"], mpData["branch"][k1]["f_connections"])
-                E[k1,k2][1:3,4:6] = inverseMat(L * mpData["branch"][k1]["br_x"], mpData["branch"][k1]["f_connections"])
-                E[k1,k2][4:6,1:3] = -inverseMat(L * mpData["branch"][k1]["br_x"], mpData["branch"][k1]["f_connections"])
-                E[k1,k2][4:6,4:6] = -2 * rN * inverseMat(L, mpData["branch"][k1]["f_connections"]) -
-                    inverseMat(L * mpData["branch"][k1]["br_r"], mpData["branch"][k1]["f_connections"])
+                E[k1,k2][1:3,1:3] = -2 * rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"]) -
+                    PMS.inverseMat(L * mpData["branch"][k1]["br_r"], mpData["branch"][k1]["f_connections"])
+                E[k1,k2][1:3,4:6] = PMS.inverseMat(L * mpData["branch"][k1]["br_x"], mpData["branch"][k1]["f_connections"])
+                E[k1,k2][4:6,1:3] = -PMS.inverseMat(L * mpData["branch"][k1]["br_x"], mpData["branch"][k1]["f_connections"])
+                E[k1,k2][4:6,4:6] = -2 * rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"]) -
+                    PMS.inverseMat(L * mpData["branch"][k1]["br_r"], mpData["branch"][k1]["f_connections"])
+
             elseif (mpData["branch"][k1]["f_bus"] == mpData["branch"][k2]["f_bus"])
-                E[k1,k2][1:3,1:3] = -rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
-                E[k1,k2][4:6,4:6] = -rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
+                E[k1,k2][1:3,1:3] = -rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
+                E[k1,k2][4:6,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
+
             elseif (mpData["branch"][k1]["t_bus"] == mpData["branch"][k2]["t_bus"])
-                E[k1,k2][1:3,1:3] = -rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
-                E[k1,k2][4:6,4:6] = -rN * inverseMat(L, mpData["branch"][k1]["t_connections"])
+                E[k1,k2][1:3,1:3] = -rN * PMS.inverseMat(L, mpData["branch"][k1]["t_connections"])
+                E[k1,k2][4:6,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][k1]["t_connections"])
+
             elseif mpData["branch"][k1]["f_bus"] == mpData["branch"][k2]["t_bus"]
                 if mpData["branch"][k1]["t_bus"] == mpData["branch"][k2]["f_bus"]
-                    E[k1,k2][1:3,1:3] = 2 * rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
-                    E[k1,k2][4:6,4:6] = 2 * rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
+                    E[k1,k2][1:3,1:3] = 2 * rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
+                    E[k1,k2][4:6,4:6] = 2 * rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
                 else
-                    E[k1,k2][1:3,1:3] = rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
-                    E[k1,k2][4:6,4:6] = rN * inverseMat(L, mpData["branch"][k1]["f_connections"])
+                    E[k1,k2][1:3,1:3] = rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
+                    E[k1,k2][4:6,4:6] = rN * PMS.inverseMat(L, mpData["branch"][k1]["f_connections"])
                 end
             end
         end
@@ -324,6 +338,7 @@ end
 
 "Obtain the submatrix F, with the opf solution given"
 function obtainF_inverter_global(mpData, rN, omega0, busList, brList, loadList, loadConnections)
+    
     F = Dict()
 
     for k in brList
@@ -333,11 +348,11 @@ function obtainF_inverter_global(mpData, rN, omega0, busList, brList, loadList, 
             # obtain line L
             if i in keys(loadList)
                 if mpData["branch"][k]["f_bus"] == parse(Int64, i)
-                    F[k,i][1:3,1:3] = -rN * inverseMat(L, mpData["branch"][k]["f_connections"])
-                    F[k,i][4:6,4:6] = -rN * inverseMat(L, mpData["branch"][k]["f_connections"])
+                    F[k,i][1:3,1:3] = -rN * PMS.inverseMat(L, mpData["branch"][k]["f_connections"])
+                    F[k,i][4:6,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][k]["f_connections"])
                 elseif mpData["branch"][k]["t_bus"] == parse(Int64, i)
-                    F[k,i][1:3,1:3] = rN * inverseMat(L, mpData["branch"][k]["t_connections"])
-                    F[k,i][4:6,4:6] = rN * inverseMat(L, mpData["branch"][k]["t_connections"])
+                    F[k,i][1:3,1:3] = rN * PMS.inverseMat(L, mpData["branch"][k]["t_connections"])
+                    F[k,i][4:6,4:6] = rN * PMS.inverseMat(L, mpData["branch"][k]["t_connections"])
                 end
             end
         end
@@ -355,8 +370,8 @@ function obtainG_inverter_global(mpData, rN, omega0, busList, brList, invList, l
         G[iBus,i] = zeros(6, 9)
         if iBus in keys(loadList)
             L = load_L[iBus]
-            G[iBus,i][1:3,4:6] = rN * inverseMat(L[loadConnections[iBus],loadConnections[iBus]], loadConnections[iBus])
-            G[iBus,i][4:6,7:9] = rN * inverseMat(L[loadConnections[iBus],loadConnections[iBus]], loadConnections[iBus])
+            G[iBus,i][1:3,4:6] = rN * PMS.inverseMat(L[loadConnections[iBus],loadConnections[iBus]], loadConnections[iBus])
+            G[iBus,i][4:6,7:9] = rN * PMS.inverseMat(L[loadConnections[iBus],loadConnections[iBus]], loadConnections[iBus])
         end
     end
 
@@ -376,14 +391,14 @@ function obtainH_inverter_global(mpData, rN, omega0, busList, brList, load_L, lo
                 try
                     # if L != 0
                     if mpData["branch"][k]["f_bus"] == parse(Int64, i)
-                        H[i,k][1:3,1:3] = -rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
-                        H[i,k][4:6,4:6] = -rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
+                        H[i,k][1:3,1:3] = -rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
+                        H[i,k][4:6,4:6] = -rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
                     elseif mpData["branch"][k]["t_bus"] == parse(Int64, i)
-                        H[i,k][1:3,1:3] = rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
-                        H[i,k][4:6,4:6] = rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
+                        H[i,k][1:3,1:3] = rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
+                        H[i,k][4:6,4:6] = rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i])
                     end
                 catch
-                    println("L[$(i)] is not invertable! for branch $(k)")
+                    Memento.warn(_LOGGER, "L[$(i)] is not invertable! for branch $(k)")
                 end
             end
         end
@@ -401,30 +416,34 @@ function obtainI_inverter_global(mpData, rN, omega0, busList, brList, loadList, 
         if i in keys(loadList)
             L = load_L[i]
             try
-                I[i][1:3,1:3] = -rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) -
-                    inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_R[i]
-                I[i][1:3,4:6] = inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_X[i]
-                I[i][4:6,1:3] = -inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_X[i]
-                I[i][1:3,4:6] = -rN * inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) -
-                    inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_R[i]
+                I[i][1:3,1:3] = -rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) -
+                    PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_R[i]
+                I[i][1:3,4:6] = PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_X[i]
+                I[i][4:6,1:3] = -PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_X[i]
+                I[i][1:3,4:6] = -rN * PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) -
+                    PMS.inverseMat(L[loadConnections[i],loadConnections[i]], loadConnections[i]) * load_R[i]
             catch
-                println("L[$(i)] is not invertable!")
+                Memento.warn(_LOGGER, "L[$(i)] is not invertable!")
             end
         end
     end
+
     return I
 end
 
 "Combine all submatrices to one stability control matrix"
 function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G, H, I, type)
+    
     n = length(busList)
     ni = length(inverters)
     m = length(brList)
+
     if type == 1
         Atot = zeros(9 * ni + 6 * m + 6 * n, 9 * ni + 6 * m + 6 * n)
         else
         Atot = Array{Any,2}(zeros(9 * ni + 6 * m + 6 * n, 9 * ni + 6 * m + 6 * n))
     end
+
     # Fill in the total matrix
     for i in 1:ni
         # fill in A
@@ -467,11 +486,13 @@ function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G,
             Atot[9 * ni + 6 * (j1 - 1) + 1:9 * ni + 6 * j1,9 * ni + 6 * (j2 - 1) + 1:9 * ni + 6 * j2] = E[brList[j1],brList[j2]]
         end
     end
+
     return Atot
 end
 
 "obtain the global matrix of the small-signal stability control"
 function obtainGlobal_multi(mpData, opfSol, rN, omega0)
+    
     # preprocessing
     busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preproc(mpData)
     load_L, load_R, load_X = PMS.procLoad(mpData, loadList, vnomList, omega0, loadConnections)

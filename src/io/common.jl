@@ -9,7 +9,7 @@ function parse_file(dss_file::String, inverter_file::String; pop_solar::Bool=fal
     for (k, v) in inverter_data
         if k != "inverters"
             if haskey(pmd_data, k)
-                @warn "'$k' from inverter data already exists in network data, skipping"
+                Memento.warn(_LOGGER, "'$k' from inverter data already exists in network data, skipping")
             else
                 pmd_data[k] = v
             end

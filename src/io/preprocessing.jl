@@ -1,5 +1,6 @@
 "Obtain the branches that are between two buses and buses with inverters"
 function preproc(mpData::Dict{String,<:Any})::Tuple
+
     brList = []
     invList = []
     invLine = Dict()
@@ -67,6 +68,7 @@ end
 
 "Obtain the load parameters from the model data"
 function procLoad(mpData, loadList, vnomList, omega0, loadConnections)
+    
     θList = [0,2π/3,-2π/3]
     load_R = Dict()
     load_X = Dict()
@@ -86,5 +88,6 @@ function procLoad(mpData, loadList, vnomList, omega0, loadConnections)
         end
         load_L[i] = load_X[i]./(omega0)
     end
+
     return load_L,load_R,load_X
 end

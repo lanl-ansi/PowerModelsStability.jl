@@ -24,4 +24,5 @@ makedocs(
 deploydocs(
     repo = "github.com/lanl-ansi/PowerModelsStability.jl.git",
     devbranch = "main",
+    push_preview = true
 )

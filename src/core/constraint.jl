@@ -3,6 +3,7 @@
 function matrixMulti(mp, A, v)
     n = length(v)
     multiExpression = JuMP.@NLexpression(mp, sum(sum(v[i] * A[i,j] * v[j] for j in 1:n) for i in 1:n))
+
     return multiExpression
 end
 
@@ -35,6 +36,7 @@ function obtainGlobal_var(mpData, pm, rN, omega0)
     Isub = PMS.obtainI_inverter_global(mpData, rN, omega0, busList, brList, loadList, load_L, load_R, load_X, loadConnections)
 
     Atot = PMS.combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 2)
+    
     return Atot
 end
 

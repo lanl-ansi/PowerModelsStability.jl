@@ -1,6 +1,6 @@
 name = "PowerModelsStability"
 uuid = "f9e4c324-c3b6-4bca-9c3d-419775f0bd17"
-authors = ["Haoxiang Yang", "David M Fobes", "Harsha Nagarajan"]
+authors = ["Haoxiang Yang", "Harsha Nagarajan", "David M Fobes"]
 repo = "https://github.com/lanl-ansi/PowerModelsStability.jl.git"
 version = "0.2.2"
 

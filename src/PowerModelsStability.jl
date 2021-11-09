@@ -2,15 +2,14 @@ module PowerModelsStability
 
     import PowerModelsDistribution
     import PowerModelsDistribution: ids, ref, var, sol, con, nw_id_default
-
-    const _PMD = PowerModelsDistribution
-    const  PMS = PowerModelsStability
-
     import JuMP
     import JSON
+    import LinearAlgebra
+    import Memento
 
-    import LinearAlgebra: eigvals, eigvecs, dot, inv, norm
-    const LA = LinearAlgebra
+    const  PMS = PowerModelsStability
+    const _PMD = PowerModelsDistribution
+    const   LA = LinearAlgebra
 
     # Create our module level logger (this will get precompiled)
     const _LOGGER = Memento.getlogger(@__MODULE__)
@@ -43,4 +42,5 @@ module PowerModelsStability
     include("prob/common.jl")
 
     include("core/export.jl")
+
 end
