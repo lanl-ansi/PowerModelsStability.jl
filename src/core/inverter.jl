@@ -3,7 +3,7 @@ import LinearAlgebra: eigvals, eigvecs, dot, inv, norm
 # inverter ODE construction, this script allows multiple inverter buses connect to the same bus
 
 "given a vector with NL expression and a constant matrix C, calculate the multiplication Cv"
-function vectorMulti(mp, C, v)
+function vectorMulti(mp::JuMP.Model, C, v)
     
     n = length(v)
     multiExpression = [JuMP.@NLexpression(mp, sum(C[i,j] * v[j] for j in 1:n)) for i in 1:n]
@@ -16,9 +16,9 @@ function inverseMat(originMat, connection)
     
     invM = zeros(3, 3)
 
-    if norm(originMat) > 0
+    if LA.norm(originMat) > 0
         try
-            invOri = inv(originMat)
+            invOri = LA.inv(originMat)
             invM[connection,connection] = invOri
         catch
             for i in 1:length(connection)
@@ -65,16 +65,16 @@ function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, i
         id0 = zeros(3)
         iq0 = zeros(3)
         for j in 1:3
-            id0[j], iq0[j] = inv([vd0[j] vq0[j];vq0[j] -vd0[j]]) * [P0 / 3;Q0 / 3]
+            id0[j], iq0[j] = LA.inv([vd0[j] vq0[j];vq0[j] -vd0[j]]) * [P0 / 3;Q0 / 3]
         end
         dvd_delta = -vq0
         dvq_delta = vd0
         dvd_v = cos.(opfSol["solution"]["bus"][i]["va"])
         dvq_v = sin.(opfSol["solution"]["bus"][i]["va"])
-        dP_delta = dot(dvd_delta, id0) + dot(dvq_delta, iq0)
-        dQ_delta = -dot(dvd_delta, iq0) + dot(dvq_delta, id0)
-        dP_v = dot(dvd_v, id0) + dot(dvq_v, iq0)
-        dQ_v = -dot(dvd_v, iq0) + dot(dvq_v, id0)
+        dP_delta = LA.dot(dvd_delta, id0) + LA.dot(dvq_delta, iq0)
+        dQ_delta = -LA.dot(dvd_delta, iq0) + LA.dot(dvq_delta, id0)
+        dP_v = LA.dot(dvd_v, id0) + LA.dot(dvq_v, iq0)
+        dQ_v = -LA.dot(dvd_v, iq0) + LA.dot(dvq_v, id0)
         dP_id = vd0
         dP_iq = vq0
         dQ_id = vq0
@@ -93,14 +93,14 @@ function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, i
                             mpData["bus"][i]["mq"] * dQ_id[1]; mpData["bus"][i]["mq"] * dQ_id[2]; mpData["bus"][i]["mp"] * dQ_id[3]
                             mpData["bus"][i]["mq"] * dQ_iq[1]; mpData["bus"][i]["mq"] * dQ_iq[2]; mpData["bus"][i]["mp"] * dQ_iq[3]
                             ]
-        A[i,i][4:6,1] = inv(L) * dvd_delta
-        A[i,i][4:6,3] = inv(L) * dvd_v
-        A[i,i][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-        A[i,i][4:6,7:9] = inv(L) * link["br_x"]
-        A[i,i][7:9,1] = inv(L) * dvq_delta
-        A[i,i][7:9,3] = inv(L) * dvq_v
-        A[i,i][7:9,4:6] = -inv(L) * link["br_x"]
-        A[i,i][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+        A[i,i][4:6,1] = LA.inv(L) * dvd_delta
+        A[i,i][4:6,3] = LA.inv(L) * dvd_v
+        A[i,i][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+        A[i,i][4:6,7:9] = LA.inv(L) * link["br_x"]
+        A[i,i][7:9,1] = LA.inv(L) * dvq_delta
+        A[i,i][7:9,3] = LA.inv(L) * dvq_v
+        A[i,i][7:9,4:6] = -LA.inv(L) * link["br_x"]
+        A[i,i][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
     end
 
     # for every pair of inverters in the same bus
@@ -111,14 +111,14 @@ function obtainA_inverter_global(mpData, opfSol, rN, omega0, busList, invList, i
                     A[i,j] = zeros(9, 9)
                     link = mpData["branch"][invLine[i]]
                     L = link["br_x"] ./ omega0
-                    A[i,j][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-                    A[i,j][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+                    A[i,j][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+                    A[i,j][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
 
                     link = mpData["branch"][invLine[j]]
                     L = link["br_x"] ./ omega0
                     A[j,i] = zeros(9, 9)
-                    A[j,i][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-                    A[j,i][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+                    A[j,i][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+                    A[j,i][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
                 end
             end
         end
@@ -148,18 +148,21 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
         vq0 = [JuMP.@NLexpression(pm.model,vmList.data[j] * sin(vaList.data[j])) for j in 1:length(vmList.data)]
         P0 = JuMP.@NLexpression(pm.model,0)
         Q0 = JuMP.@NLexpression(pm.model,0)
+
         for g in keys(mpData["gen"])
             if "$(mpData["gen"][g]["gen_bus"])" == i
                 P0 += sum(_PMD.var(pm, 0, :pg, g))
                 Q0 += sum(_PMD.var(pm, 0, :qg, g))
             end
         end
+        
         id0 = Array{Any,1}([0,0,0])
         iq0 = Array{Any,1}([0,0,0])
         for j in 1:3
             id0[j] = JuMP.@NLexpression(pm.model,(vd0[j] * P0 / 3 + vq0[j] * Q0 / 3) / (vmList.data[j]^2))
             iq0[j] = JuMP.@NLexpression(pm.model,(vq0[j] * P0 / 3 - vd0[j] * Q0 / 3) / (vmList.data[j]^2))
         end
+
         dvd_delta = [JuMP.@NLexpression(pm.model,-vq0[j]) for j in 1:length(vq0)]
         dvq_delta = [JuMP.@NLexpression(pm.model,vd0[j]) for j in 1:length(vd0)]
         dvd_v = [JuMP.@NLexpression(pm.model,cos(vaList.data[j])) for j in 1:length(vaList.data)]
@@ -194,14 +197,14 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mq"] * dQ_iq[2]))
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (mpData["bus"][iBus]["mp"] * dQ_iq[3]))
                             ]
-        A[iBus,iBus][4:6,1] = PMS.vectorMulti(pm.model, inv(L), dvd_delta)
-        A[iBus,iBus][4:6,3] = PMS.vectorMulti(pm.model, inv(L), dvd_v)
-        A[iBus,iBus][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-        A[iBus,iBus][4:6,7:9] = inv(L) * link["br_x"]
-        A[iBus,iBus][7:9,1] = PMS.vectorMulti(pm.model, inv(L), dvq_delta)
-        A[iBus,iBus][7:9,3] = PMS.vectorMulti(pm.model, inv(L), dvq_v)
-        A[iBus,iBus][7:9,4:6] = -inv(L) * link["br_x"]
-        A[iBus,iBus][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+        A[iBus,iBus][4:6,1] = PMS.vectorMulti(pm.model, LA.inv(L), dvd_delta)
+        A[iBus,iBus][4:6,3] = PMS.vectorMulti(pm.model, LA.inv(L), dvd_v)
+        A[iBus,iBus][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+        A[iBus,iBus][4:6,7:9] = LA.inv(L) * link["br_x"]
+        A[iBus,iBus][7:9,1] = PMS.vectorMulti(pm.model, LA.inv(L), dvq_delta)
+        A[iBus,iBus][7:9,3] = PMS.vectorMulti(pm.model, LA.inv(L), dvq_v)
+        A[iBus,iBus][7:9,4:6] = -LA.inv(L) * link["br_x"]
+        A[iBus,iBus][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
     end
 
     # for every pair of inverters in the same bus
@@ -212,18 +215,18 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
                     A[i,j] = zeros(9, 9)
                     link = mpData["branch"][invLine[i]]
                     L = link["br_x"] ./ omega0
-                    A[i,j][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-                    A[i,j][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+                    A[i,j][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+                    A[i,j][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
 
                     link = mpData["branch"][invLine[j]]
                     L = link["br_x"] ./ omega0
                     A[j,i] = zeros(9, 9)
-                    A[j,i][4:6,4:6] = -inv(L) * link["br_r"] - rN * inv(L)
-                    A[j,i][7:9,7:9] = -inv(L) * link["br_r"] - rN * inv(L)
+                    A[j,i][4:6,4:6] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
+                    A[j,i][7:9,7:9] = -LA.inv(L) * link["br_r"] - rN * LA.inv(L)
                 end
             end
         end
-            end
+    end
 
     return A
 end
@@ -240,6 +243,7 @@ function obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, i
             B[i,k] = zeros(9, 6)
             iInd = parse(Int64, iBus)
             L = mpData["branch"][invLine[i]]["br_x"] ./ omega0
+
             if mpData["branch"][k]["f_bus"] == iInd
                 B[i,k][4:6,1:3] = rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
                 B[i,k][7:9,4:6] = rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["f_connections"])
@@ -247,6 +251,7 @@ function obtainB_inverter_global(mpData, rN, omega0, busList, brList, invList, i
                 B[i,k][4:6,1:3] = -rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
                 B[i,k][7:9,4:6] = -rN * PMS.inverseMat(L, mpData["branch"][invLine[i]]["t_connections"])
             end
+
         end
     end
 
@@ -434,9 +439,9 @@ end
 "Combine all submatrices to one stability control matrix"
 function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G, H, I, type)
     
-    n = length(busList)
+    n  = length(busList)
     ni = length(inverters)
-    m = length(brList)
+    m  = length(brList)
 
     if type == 1
         Atot = zeros(9 * ni + 6 * m + 6 * n, 9 * ni + 6 * m + 6 * n)
@@ -491,11 +496,15 @@ function combineSub(busList, brList, inverters, invBusDict, A, B, C, D, E, F, G,
 end
 
 "obtain the global matrix of the small-signal stability control"
-function obtainGlobal_multi(mpData, opfSol, rN, omega0)
-    
+function get_global_stability_matrix(mpData, opfSol, rN, omega0)
+
+    if isapprox(omega0, 0, atol=1E-6) 
+        Memento.error(_LOGGER, "Inverter frequency set-point value cannot be zero")
+    end
+
     # preprocessing
-    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preproc(mpData)
-    load_L, load_R, load_X = PMS.procLoad(mpData, loadList, vnomList, omega0, loadConnections)
+    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preprocess_data(mpData)
+    load_L, load_R, load_X = PMS.get_load_parameters(mpData, loadList, vnomList, omega0, loadConnections)
 
     inverters = []
     invBusDict = Dict()

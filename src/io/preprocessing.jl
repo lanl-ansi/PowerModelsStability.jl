@@ -1,15 +1,18 @@
 "Obtain the branches that are between two buses and buses with inverters"
-function preproc(mpData::Dict{String,<:Any})::Tuple
+function preprocess_data(mpData::Dict{String,<:Any})::Tuple
 
     brList = []
     invList = []
     invLine = Dict()
     invConnected = Dict()
     for k in keys(mpData["branch"])
+
         t_bus = mpData["branch"][k]["t_bus"]
         f_bus = mpData["branch"][k]["f_bus"]
+
         if !(mpData["bus"]["$(t_bus)"]["inverter_bus"]) && !(mpData["bus"]["$(f_bus)"]["inverter_bus"])
             push!(brList,k)
+
         elseif mpData["bus"]["$(t_bus)"]["inverter_bus"]
             push!(invList,"$(f_bus)")
             if "$(f_bus)" in keys(invConnected)
@@ -19,6 +22,7 @@ function preproc(mpData::Dict{String,<:Any})::Tuple
                 invConnected["$(f_bus)"] = ["$(t_bus)"]
             end
             invLine["$(t_bus)"] = k
+
         else
             push!(invList,"$(t_bus)")
             if "$(t_bus)" in keys(invConnected)
@@ -29,6 +33,7 @@ function preproc(mpData::Dict{String,<:Any})::Tuple
             end
             invLine["$(f_bus)"] = k
         end
+
     end
 
     # obtain the list of buses with loads, assuming balanced loads
@@ -67,9 +72,9 @@ function preproc(mpData::Dict{String,<:Any})::Tuple
 end
 
 "Obtain the load parameters from the model data"
-function procLoad(mpData, loadList, vnomList, omega0, loadConnections)
+function get_load_parameters(mpData, loadList, vnomList, omega0, loadConnections)
     
-    θList = [0,2π/3,-2π/3]
+    θ_list = [0, 2π/3, -2π/3]
     load_R = Dict()
     load_X = Dict()
     load_L = Dict()
@@ -79,15 +84,17 @@ function procLoad(mpData, loadList, vnomList, omega0, loadConnections)
         load_R[i] = zeros(3,3)
         load_X[i] = zeros(3,3)
         for j in 1:3
+
             if j in loadConnections[i]
                 if vnomList[i][j] != 0
                     load_R[i][j,j] = loadList[i][1][j]/vnomList[i][j]^2
-                    load_X[i][j,j] = loadList[i][2][j]/((vnomList[i][j]*cos(θList[j]))^2 - (vnomList[i][j]*sin(θList[j]))^2)
+                    load_X[i][j,j] = loadList[i][2][j]/((vnomList[i][j]*cos(θ_list[j]))^2 - (vnomList[i][j]*sin(θ_list[j]))^2)
                 end
             end
+
         end
         load_L[i] = load_X[i]./(omega0)
     end
 
-    return load_L,load_R,load_X
+    return load_L, load_R, load_X
 end

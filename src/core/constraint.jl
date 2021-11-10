@@ -1,6 +1,6 @@
 # require to load inverter.jl first
 "Given a matrix A with NL expression and an eigenvector v, calculate the multiplication v^\\top A v"
-function matrixMulti(mp, A, v)
+function matrixMulti(mp::JuMP.Model, A::Array{Any,2}, v)
     n = length(v)
     multiExpression = JuMP.@NLexpression(mp, sum(sum(v[i] * A[i,j] * v[j] for j in 1:n) for i in 1:n))
 
@@ -9,8 +9,8 @@ end
 
 "Obtain the small-signal stability matrix used to generate eigen-value constraints"
 function obtainGlobal_var(mpData, pm, rN, omega0)
-    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preproc(mpData)
-    load_L, load_R, load_X = PMS.procLoad(mpData, loadList, vnomList, omega0, loadConnections)
+    busList, brList, invList, invConnected, invLine, loadList, vnomList, loadConnections = PMS.preprocess_data(mpData)
+    load_L, load_R, load_X = PMS.get_load_parameters(mpData, loadList, vnomList, omega0, loadConnections)
 
     inverters = []
     invBusDict = Dict()
