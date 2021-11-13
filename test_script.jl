@@ -45,7 +45,8 @@ ni = 1
 Amg = PowerModelsStability.obtainGlobal_var(mpData_math, pm, rN, omega0,invData)
 n = size(Amg)[1]
 # set up P, only positive diagonal terms
-JuMP.@variable(pm.model, P[i in 1:n] >= 0);
+#JuMP.@variable(pm.model, P[i in 1:n] >= 0);
+JuMP.@variable(pm.model, P[1:n,1:n] >= 0);
 JuMP.@constraint(pm.model, consP[i in (ni*9+1):n], P[i] == 0)
 #JuMP.@constraint(pm.model, sumP, sum(P[i] for i in 1:n) >= 1e-4)
 JuMP.@constraint(pm.model, sumP, sum(P[i] for i in 1:(ni*9)) >= 1e-3)

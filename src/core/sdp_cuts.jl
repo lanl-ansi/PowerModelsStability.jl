@@ -70,9 +70,21 @@ end
 "Generate SOCP constraints"
 function socp_cons(pm::PowerModels.AbstractPowerModel, nw::Int, n::Int, ni::Int,Amg::Array{Any,2})
     # P nonnegative constraint
-    JuMP.@constraint(pm.model, Pcons[i in 1:n, j in (i+1):n], pm.model[:P][i,i]*pm.model[:P][j,j] - pm.model[:P][i,j]*pm.model[:P][j,i] >= 0.0)
+    JuMP.@constraint(pm.model, Pcons[i in 1:(n-1)], pm.model[:P][i,i]*pm.model[:P][i+1,i+1] - pm.model[:P][i,i+1]*pm.model[:P][i+1,i] >= 0.0)
     # B nonpositive constraint
-    JuMP.@constraint(pm.model, Bcons[i in 1:n, j in (i+1):n], pm.model[:B][i,i]*pm.model[:B][j,j] - pm.model[:B][i,j]*pm.model[:B][j,i] >= 0.0)
+    AnonzeroDict = Dict()
+    for i in 1:n
+        AnonzeroDict[i] = []
+        for j in 1:n
+            if Amg[j,i] != 0.0
+                push!(AnonzeroDict[i],j)
+            end
+        end
+    end
+    JuMP.@NLconstraint(pm.model, Bcons[i in 1:(n-1)], (sum(Amg[j,i]*pm.model[:P][j,i] for j in 1:n if j in AnonzeroDict[i]) + sum(pm.model[:P][i,j]*Amg[j,i] for j in 1:n if j in AnonzeroDict[i]))*
+        (sum(Amg[j,i+1]*pm.model[:P][j,i+1] for j in 1:n if j in AnonzeroDict[i+1]) + sum(pm.model[:P][i+1,j]*Amg[j,i+1] for j in 1:n if j in AnonzeroDict[i+1])) -
+        (sum(Amg[j,i]*pm.model[:P][j,i+1] for j in 1:n if j in AnonzeroDict[i]) + sum(pm.model[:P][i,j]*Amg[j,i+1] for j in 1:n if j in AnonzeroDict[i+1]))*
+        (sum(Amg[j,i+1]*pm.model[:P][j,i] for j in 1:n if j in AnonzeroDict[i+1]) + sum(pm.model[:P][i+1,j]*Amg[j,i] for j in 1:n if j in AnonzeroDict[i])) <= 0.0)
 end
 
 "Add the B-P cuts to the OPF problem"

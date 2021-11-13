@@ -1,0 +1,13 @@
+! Fault at the substation transformer
+
+Line.CB_101.enabled=n ! Fault on Circuit 1000
+Line.CB_201.enabled=n ! Fault on Circuit 2000 between CB201 and CB202
+Line.CB_202.enabled=n ! Fault on Circuit 2000 between CB201 and CB202
+Line.CB_301.enabled=n ! Fault on Circuit 3000 between CB301 and CB302
+Line.CB_302.enabled=n ! Fault on Circuit 3000 between CB301 and CB302
+
+
+! Ensure Tie-switches are not enabled
+Line.CB_102.enabled=n
+Line.CB_204.enabled=n
+Line.CB_303.enabled=n

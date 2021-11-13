@@ -192,7 +192,7 @@ function obtainA_inverter_global_var(mpData, pm, rN, omega0, busList, invList, i
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mp"] * viList.data[3])
                             ]
         A[iBus,iBus][3,:] = [JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * mpData["bus"][iBus]["mq"] *
-                                (-sum(-viList.data[j] * iq0[j] for j in 1:3) + sum(vrList.data[j] * id0[j] for j in 1:3)))
+                                (sum(viList.data[j] * iq0[j] for j in 1:3) + sum(vrList.data[j] * id0[j] for j in 1:3)))
                             0
                             JuMP.@NLexpression(pm.model,-1 / mpData["bus"][iBus]["tau"] * (1 + mpData["bus"][iBus]["mq"] *
                                 (-sum(dvd_v[j] * iq0[j] for j in 1:length(dvd_v)) + sum(dvq_v[j] * id0[j] for j in 1:length(dvq_v)))))
