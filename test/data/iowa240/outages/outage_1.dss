@@ -1,0 +1,10 @@
+! Fault at the substation transformer
+
+Line.CB_101.enabled=n ! Fault at the substation transformer (CB_101 open to isolate the feeder)
+Line.CB_201.enabled=n ! Fault at the substation transformer (CB_201 open to isolate the feeder)
+Line.CB_301.enabled=n ! Fault at the substation transformer (CB_301 open to isolate the feeder)
+
+! Ensure Tie-switches are not enabled
+Line.CB_102.enabled=n
+Line.CB_204.enabled=n
+Line.CB_303.enabled=n

@@ -1,0 +1,33 @@
+New LoadShape.PVScaling1 mult=(0 0 0 0 0 0 0 0.084654201 0.4084613 0.676864065 0.859273011 0.976124644 1 0.934483244 0.778657014 0.531155984 0.209112825 0 0 0 0 0 0 0)
+
+New pvsystem.PV1 phases=3 bus1=bus1009.1.2.3 kv=13.8 conn=wye pmpp=110 kva=100 pf=1 balanced=true limitcurrent=true vminpu=0.9090909 daily=PVScaling1
+New Storage.Bat1 phases=3 bus1=bus1009.1.2.3 kv=13.8 kwhstored=200 kwhrated=200 kva=100 kvar=100
+~ %charge=100 %discharge=100 %effcharge=100 %effdischarge=100 %idlingkw=1 %r=0 %x=50
+
+
+New pvsystem.PV2 phases=3 bus1=bus2027.1.2.3 kv=13.8 conn=wye pmpp=110 kva=100 pf=1 balanced=true limitcurrent=true vminpu=0.9090909 daily=PVScaling1
+New Storage.Bat2 phases=3 bus1=bus2027.1.2.3 kv=13.8 kwhstored=800 kwhrated=800 kva=400 kvar=400
+~ %charge=100 %discharge=100 %effcharge=100 %effdischarge=100 %idlingkw=1 %r=0 %x=50
+
+New pvsystem.PV3 phases=3 bus1=bus3030.1.2.3 kv=13.8 conn=wye pmpp=110 kva=100 pf=1 balanced=true limitcurrent=true vminpu=0.9090909 daily=PVScaling1
+New Storage.Bat3 phases=3 bus1=bus3030.1.2.3 kv=13.8 kwhstored=800 kwhrated=800 kva=400 kvar=400
+~ %charge=100 %discharge=100 %effcharge=100 %effdischarge=100 %idlingkw=1 %r=0 %x=50
+
+New pvsystem.PV4 phases=3 bus1=bus3082.1.2.3 kv=13.8 conn=wye pmpp=110 kva=100 pf=1 balanced=true limitcurrent=true vminpu=0.9090909 daily=PVScaling1
+
+// Per PSSE RAW33 format, use the saturated transient or subtransient reactance for SC studies
+// Transient reactance is based on 75 kW 480 Vll generator connected in 3ph-wye
+// From Nasar Table 7.1 Xd' in the range
+// round rotor SG: [0.35, 0.4]
+// salient-pole SG: [0.1, 0.15]
+// low-speed machines like hydro/diesel are salient-pole
+// Including mass constant & default damping (not used here for faults, but required for dynamics)
+
+// Need to also include Delta-Wye step-up transformer.
+// From Turan Gonen Table A.12 3ph 500 kW transformer this is %Z=5.1 %R=1.1 => %X=4.98
+New Transformer.T_3082 Phases=3 Windings=2 XHL=4.98
+~ wdg=1 bus=bus3082.1.2.3.0     conn=wye kV=13.8  kva=750 %R=0.55
+~ wdg=2 bus=T_bus3082_L.1.2.3  conn=delta kV=0.48 kva=750 %R=0.55
+
+New Generator.Gen3 phases=3 bus1=T_bus3082_L.1.2.3 kv=0.48 pf=1 conn=wye kw=750 kvar=0 Xdp=0.15 H=1.5 D=1.0
+
