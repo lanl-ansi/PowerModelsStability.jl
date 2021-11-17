@@ -3,7 +3,11 @@
 ## Staged
 - Added support for Memento's logging 
 - Added `PMS` (`PowerModelsStability`) and `LA` (`LinearAlgebra`) shortcuts for clarity 
+- Renamed a few functions for clarity
 - Added CompatHelper.yml
+
+## v0.2.3
+- Added support for PowerModelsDistribution v0.13
 
 ## v0.2.2
 - Added support for PowerModelsDistribution v0.12
