@@ -2,7 +2,7 @@
 function parse_json(io::Union{IO,String})::Dict{String,Any}
     inverter_data = JSON.parsefile(io)
 
-    _fix_inverter_matrices!(inverter_data)
+    PMS._fix_inverter_matrices!(inverter_data)
 
     return inverter_data
 end

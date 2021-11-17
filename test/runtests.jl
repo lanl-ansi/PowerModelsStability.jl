@@ -1,16 +1,16 @@
 using PowerModelsStability
+using Test
 
 import PowerModelsDistribution
 import Ipopt
-
-const PMD = PowerModelsDistribution
-PMD.silence!()
-
 import LinearAlgebra: eigvals, eigvecs
 
-using Test
+const PMD = PowerModelsDistribution
+const PMS = PowerModelsStability
 
-ipopt_solver = PMD.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 3, "tol"=>1e-5)
+PMD.silence!()
+
+ipopt_solver = PMD.optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 3, "tol"=>1e-5, "max_iter" => Int(1E4), "sb" => "yes")
 
 @testset "PowerModelsStability" begin
     include("test_2bus.jl")

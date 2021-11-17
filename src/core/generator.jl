@@ -1,8 +1,10 @@
-# traditional generator ODE construction
+# Traditional generator ODE construction
 
 # obtain the A matrix for diesel generator
 # To-do: need to change the bus_type input to an external source
+
 function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
+
     # obtain the voltage solution
     T = 2 / 3 * [1 cos(-2 * pi / 3) cos(2 * pi / 3)
              0 -sin(-2 * pi / 3) -sin(2 * pi / 3)
@@ -18,7 +20,8 @@ function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
     iD = Dict()
     iQ = Dict()
     A = Dict()
-    errorList = []
+    error_list = []
+    
     for i in iBusList
         if mpData["bus"][i]["bus_type"] == 3
             delta0[i] = opfSol["solution"]["bus"][i]["va"][1]
@@ -55,9 +58,9 @@ function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
             A[i][2,2] = -kD[i]
             A[i][2,1] = -(2 * vd[i] * vq[i]) / (omega0 * (vd[i]^2 + vq[i]^2)) * (pg[i] - qg[i])
         else
-            push!(errorList, i)
+            push!(error_list, i)
         end
     end
 
-    return A, errorList
+    return A, error_list
 end
