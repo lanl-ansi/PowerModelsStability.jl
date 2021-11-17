@@ -2,6 +2,10 @@
 
 ## staged
 
+## v0.2.3
+
+- Added support for PowerModelsDistribution v0.13
+
 ## v0.2.2
 
 - Added support for PowerModelsDistribution v0.12
