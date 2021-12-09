@@ -2,7 +2,7 @@ name = "PowerModelsStability"
 uuid = "f9e4c324-c3b6-4bca-9c3d-419775f0bd17"
 authors = ["Haoxiang Yang", "Harsha Nagarajan", "David M Fobes"]
 repo = "https://github.com/lanl-ansi/PowerModelsStability.jl.git"
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 InfrastructureModels = "2030c09a-7f63-5d83-885d-db604e0e9cc0"
