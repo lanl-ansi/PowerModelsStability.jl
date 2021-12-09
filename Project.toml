@@ -13,7 +13,7 @@ Memento = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
 PowerModelsDistribution = "d7431456-977f-11e9-2de3-97ff7677985e"
 
 [compat]
-InfrastructureModels = "~0.6.0"
+InfrastructureModels = "~0.6.0, 0.7"
 Ipopt = ">= 0.4"
 JSON = "~0.21"
 JuMP = "~0.21, 0.22"
