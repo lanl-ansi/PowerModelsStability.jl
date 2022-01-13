@@ -4,12 +4,16 @@
 
 - none
 
+## v0.3.0
+
+- Drop support for JuMP < 0.22
+
 ## v0.2.4
 
 - Added support for InfrastructureModels v0.7
 - Added support for JuMP v0.22
-- Added support for Memento's logging 
-- Added `PMS` (`PowerModelsStability`) and `LA` (`LinearAlgebra`) shortcuts for clarity 
+- Added support for Memento's logging
+- Added `PMS` (`PowerModelsStability`) and `LA` (`LinearAlgebra`) shortcuts for clarity
 - Renamed a few functions for clarity
 - Added CompatHelper.yml
 
