@@ -4,6 +4,11 @@
 
 - none
 
+## v0.3.1
+
+- Raise Julia minimum version to v1.6 (LTS)
+- Add JuMP v0.23, Ipopt v1.0 support
+
 ## v0.3.0
 
 - Drop support for JuMP < 0.22
