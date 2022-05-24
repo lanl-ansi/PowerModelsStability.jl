@@ -4,6 +4,10 @@
 
 - none
 
+## v0.3.2
+
+- Add JuMP v1 support
+
 ## v0.3.1
 
 - Raise Julia minimum version to v1.6 (LTS)
