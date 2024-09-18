@@ -2,7 +2,7 @@
 "Given a matrix A with NL expression and an eigenvector v, calculate the multiplication v^\\top A v"
 function matrixMulti(mp::JuMP.Model, A::Array{Any,2}, v)
     n = length(v)
-    multiExpression = JuMP.@NLexpression(mp, sum(sum(v[i] * A[i,j] * v[j] for j in 1:n) for i in 1:n))
+    multiExpression = JuMP.@expression(mp, sum(sum(v[i] * A[i,j] * v[j] for j in 1:n) for i in 1:n))
 
     return multiExpression
 end
@@ -36,7 +36,7 @@ function obtainGlobal_var(mpData, pm, rN, omega0)
     Isub = PMS.obtainI_inverter_global(mpData, rN, omega0, busList, brList, loadList, load_L, load_R, load_X, loadConnections)
 
     Atot = PMS.combineSub(busList, brList, inverters, invBusDict, Asub, Bsub, Csub, Dsub, Esub, Fsub, Gsub, Hsub, Isub, 2)
-    
+
     return Atot
 end
 
@@ -46,6 +46,6 @@ function constraint_stability(pm::_PMD.AbstractUnbalancedPowerModel, nw::Int, ei
     for ev in eigenVectorList
         evMulti_real = PMS.matrixMulti(pm.model, Amg, real(ev))
         evMulti_imag = PMS.matrixMulti(pm.model, Amg, imag(ev))
-        JuMP.@NLconstraint(pm.model, evMulti_real + evMulti_imag <= 0)
+        JuMP.@constraint(pm.model, evMulti_real + evMulti_imag <= 0)
     end
 end

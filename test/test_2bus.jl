@@ -1,5 +1,5 @@
 @testset "test the two bus system" begin
-    
+
     println(">>>>>>> Testing 2-bus system <<<<<<<<")
 
     # load the data

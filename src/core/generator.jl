@@ -21,7 +21,7 @@ function obtainA_diesel(mpData, opfSol, iBusList, omega0, kD)
     iQ = Dict()
     A = Dict()
     error_list = []
-    
+
     for i in iBusList
         if mpData["bus"][i]["bus_type"] == 3
             delta0[i] = opfSol["solution"]["bus"][i]["va"][1]

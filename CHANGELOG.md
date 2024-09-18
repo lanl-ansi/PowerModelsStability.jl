@@ -4,6 +4,10 @@
 
 - none
 
+## v0.4.0
+
+- Updated to JuMP 1.23.2 to use new NL syntax
+
 ## v0.3.3
 
 - Update compat for PowerModelsDistribution v0.15

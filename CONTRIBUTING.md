@@ -68,7 +68,7 @@ All new dependencies should be carefully considered before being added. It is im
 
 All new dependencies are are ultimately approved should also include an entry under `[compat]` indicating the acceptable versions (Julia automerge requirement). This includes test-only dependencies that appear under `[extras]`
 
-The `Manifest.toml` __should not__ be included in the repo.
+The `Manifest.toml` **should not** be included in the repo.
 
 ## Pull Requests
 

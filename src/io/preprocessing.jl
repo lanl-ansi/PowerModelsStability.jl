@@ -73,7 +73,7 @@ end
 
 "Obtain the load parameters from the model data"
 function get_load_parameters(mpData, loadList, vnomList, omega0, loadConnections)
-    
+
     θ_list = [0, 2π/3, -2π/3]
     load_R = Dict()
     load_X = Dict()
