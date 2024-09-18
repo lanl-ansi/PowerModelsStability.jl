@@ -11,7 +11,7 @@ makedocs(
         collapselevel = 1,
     ),
     modules = [PowerModelsStability],
-    strict = false,
+    warnonly = true,
     pages = [
         "Introduction" => "index.md",
         "installation.md",
